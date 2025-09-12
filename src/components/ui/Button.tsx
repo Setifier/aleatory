@@ -13,10 +13,16 @@ const Button = ({
   type = "button",
   disabled = false,
 }: ButtonProps) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick?.();
+  };
+
   return (
     <button
       type={type}
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       className={`bg-primary-500 text-white px-4 py-2 rounded hover:bg-primary-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500 ${className}`}
     >

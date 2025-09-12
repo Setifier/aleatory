@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import ErrorMessage from "./ErrorMessage";
+import { normalizeText } from "../../lib/textUtils";
 
 interface InputFieldProps {
   onAddItem: (item: string) => void; // Fonction pour ajouter l'élément
@@ -10,22 +11,6 @@ interface InputFieldProps {
   disabled?: boolean; // Désactiver le composant
 }
 
-// Fonction utilitaire pour normaliser le texte
-const normalizeText = (text: string): string => {
-  return (
-    text
-      // Réduire les espaces multiples à un seul espace
-      .replace(/\s+/g, " ")
-      // Supprimer les espaces en début et fin
-      .trim()
-      // Convertir tout en minuscules d'abord
-      .toLowerCase()
-      // Mettre en majuscule la première lettre de chaque mot (sauf après un tiret)
-      .replace(/(?:^|\s)([a-z])/g, (match, letter) =>
-        match.replace(letter, letter.toUpperCase())
-      )
-  );
-};
 
 const InputField = ({
   onAddItem,

@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { normalizeText } from "./textUtils";
 
 export type SavedItem = {
   id: number;
@@ -20,11 +21,14 @@ export const checkItemExists = async (
       return { exists: false, error: "Utilisateur non connecté" };
     }
 
+    // Normaliser le nom de l'item pour la comparaison
+    const normalizedName = normalizeText(itemName);
+
     const { data, error } = await supabase
       .from("saved_items")
       .select("id")
       .eq("user_id", user.id)
-      .eq("item_name", itemName)
+      .eq("item_name", normalizedName)
       .limit(1);
 
     if (error) {
@@ -52,12 +56,25 @@ export const saveItem = async (
       return { success: false, error: "Utilisateur non connecté" };
     }
 
+    // Normaliser le nom de l'item
+    const normalizedName = normalizeText(itemName);
+
+    // Vérifier si l'item existe déjà (avec le nom normalisé)
+    const existsResult = await checkItemExists(normalizedName);
+    if (existsResult.error) {
+      return { success: false, error: existsResult.error };
+    }
+    
+    if (existsResult.exists) {
+      return { success: false, error: `"${normalizedName}" est déjà enregistré` };
+    }
+
     const { data, error } = await supabase
       .from("saved_items")
       .insert([
         {
           user_id: user.id,
-          item_name: itemName,
+          item_name: normalizedName,
         },
       ])
       .select();
@@ -119,11 +136,14 @@ export const deleteItem = async (
       return { success: false, error: "Utilisateur non connecté" };
     }
 
+    // Normaliser le nom de l'item pour la suppression
+    const normalizedName = normalizeText(itemName);
+
     const { error } = await supabase
       .from("saved_items")
       .delete()
       .eq("user_id", user.id)
-      .eq("item_name", itemName);
+      .eq("item_name", normalizedName);
 
     if (error) {
       console.error("Erreur suppression:", error);

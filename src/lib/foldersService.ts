@@ -1,21 +1,6 @@
 import { supabase } from "./supabaseClient";
+import { normalizeText } from "./textUtils";
 
-// Fonction utilitaire pour normaliser le texte (comme pour les items)
-const normalizeText = (text: string): string => {
-  return (
-    text
-      // Réduire les espaces multiples à un seul espace
-      .replace(/\s+/g, " ")
-      // Supprimer les espaces en début et fin
-      .trim()
-      // Convertir tout en minuscules d'abord
-      .toLowerCase()
-      // Mettre en majuscule la première lettre de chaque mot (sauf après un tiret)
-      .replace(/(?:^|\s)([a-z])/g, (match, letter) =>
-        match.replace(letter, letter.toUpperCase())
-      )
-  );
-};
 
 export interface FolderItem {
   id: number;
