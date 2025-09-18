@@ -39,7 +39,7 @@ const DisableMfaModal = ({ isOpen, onClose, onConfirm, isLoading = false }: Disa
           <p className="text-gray-600 mb-4">
             <strong>Attention :</strong> Cette action supprimera définitivement votre configuration d'authentification à deux facteurs.
           </p>
-          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+          <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4 shadow-sm">
             <h4 className="font-medium text-red-800 mb-2">Ce qui sera perdu :</h4>
             <ul className="text-sm text-red-700 space-y-1">
               <li>• Votre code QR actuel</li>

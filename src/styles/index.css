@@ -1,6 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== BASE STYLES ===== */
+body {
+  font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  font-variation-settings: normal;
+}
 
 /* ===== ANIMATIONS CUSTOM ===== */
 
@@ -37,6 +45,16 @@
   }
 }
 
+/* Animation Winner - Grossissement/Rapetissage */
+@keyframes winnerPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
 /* Classes utilitaires */
 .animate-modal-pulse {
   animation: modalPulse 0.6s ease-in-out 3;
@@ -44,4 +62,32 @@
 
 .animate-text-appear {
   animation: textAppear 2.4s ease-out forwards;
+}
+
+.animate-winner-pulse {
+  animation: winnerPulse 2s ease-in-out infinite;
+}
+
+/* Scrollbar personnalisée */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

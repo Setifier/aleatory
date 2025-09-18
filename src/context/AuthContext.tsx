@@ -1,8 +1,23 @@
-import { createContext, useEffect, useState, useContext } from "react";
+import { createContext, useEffect, useState, useContext, useCallback } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 import { isMfaEnabledInPreferences } from "../lib/mfaPreferences";
 import { getAccountDeletionStatus } from "../lib/accountService";
+
+interface SessionWithAal extends Session {
+  aal?: 'aal1' | 'aal2';
+}
+
+interface AuthResult {
+  success: boolean;
+  error?: string | Error;
+  data?: unknown;
+  needsEmailConfirmation?: boolean | null;
+  requiresMfa?: boolean;
+  message?: string;
+  requiresReauth?: boolean;
+  isUserAlreadyExists?: boolean;
+}
 
 interface AuthContextType {
   session: Session | null;
@@ -10,13 +25,13 @@ interface AuthContextType {
     email: string,
     password: string,
     pseudo?: string
-  ) => Promise<any>;
-  signOut: () => Promise<any>;
-  signInUser: (email: string, password: string) => Promise<any>;
+  ) => Promise<AuthResult>;
+  signOut: () => Promise<AuthResult>;
+  signInUser: (email: string, password: string) => Promise<AuthResult>;
   mfaChallenge: { factorId: string; challengeId: string } | null;
-  verifyMfaAndSignIn: (code: string) => Promise<any>;
+  verifyMfaAndSignIn: (code: string) => Promise<AuthResult>;
   isMfaRequired: boolean;
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<any>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
   // Suppression de compte
   isAccountScheduledForDeletion: boolean;
   accountDeletionDate?: Date;
@@ -54,13 +69,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (error) {
       console.error("Erreur lors de la création de l'utilisateur:", error);
-      return { success: false, error };
+
+      // Vérifier si c'est une erreur "User already registered"
+      if (error.message && error.message.includes("User already registered")) {
+        return {
+          success: false,
+          error: error.message || "Utilisateur déjà enregistré",
+          isUserAlreadyExists: true
+        };
+      }
+
+      return { success: false, error: error.message || "Erreur lors de l'inscription" };
     }
 
     return {
       success: true,
       data,
-      needsEmailConfirmation: !data.session && data.user,
+      needsEmailConfirmation: !data.session && !!data.user,
     };
   };
 
@@ -78,18 +103,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Vérifier d'abord si l'utilisateur a des facteurs MFA
-      const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+      const { data: factors } = await supabase.auth.mfa.listFactors();
 
       // Si l'utilisateur a des facteurs MFA ET que MFA est activé dans les préférences
       if (factors?.all && factors.all.length > 0 && isMfaEnabledInPreferences()) {
-        const aal = data.session?.aal;
+        const aal = (data.session as SessionWithAal)?.aal;
         
         // Si pas AAL2, alors MFA requis (peu importe si aal1, undefined, etc.)
         if (aal !== 'aal2') {
           const factor = factors.all[0];
           
           // IMPORTANT: Créer le challenge AVANT de se déconnecter
-          const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ 
+          const { data: challenge } = await supabase.auth.mfa.challenge({ 
             factorId: factor.id 
           });
           
@@ -137,7 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: true, data };
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
-      return { success: false, error };
+      return { success: false, error: "Erreur de connexion" };
     }
   };
 
@@ -166,7 +191,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: true, data };
     } catch (error) {
       console.error("Erreur lors de la vérification MFA:", error);
-      return { success: false, error };
+      return { success: false, error: "Erreur de vérification MFA" };
     }
   };
 
@@ -195,12 +220,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: true };
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
-      return { success: false, error };
+      return { success: false, error: "Erreur de déconnexion" };
     }
   };
 
   // Update Password
-  const updatePassword = async (currentPassword: string, newPassword: string) => {
+  const updatePassword = async (_currentPassword: string, newPassword: string) => {
     try {
       if (!session?.user?.email) {
         return { success: false, error: "Utilisateur non connecté" };
@@ -212,7 +237,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const isMfaEnabledByUser = isMfaEnabledInPreferences();
       
       // Si MFA activé ET préférence utilisateur MFA activée, vérifier le niveau AAL
-      if (hasMfa && isMfaEnabledByUser && session.aal !== 'aal2') {
+      if (hasMfa && isMfaEnabledByUser && (session as SessionWithAal).aal !== 'aal2') {
         return { 
           success: false, 
           error: "Veuillez vous reconnecter avec votre code d'authentification pour modifier votre mot de passe",
@@ -248,7 +273,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Rafraîchir le statut de suppression de compte
-  const refreshDeletionStatus = async () => {
+  const refreshDeletionStatus = useCallback(async () => {
     if (session) {
       const status = await getAccountDeletionStatus();
       setIsAccountScheduledForDeletion(status.isScheduledForDeletion);
@@ -260,12 +285,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setAccountDeletionDate(undefined);
       setAccountDeletionDaysRemaining(undefined);
     }
-  };
+  }, [session]);
 
   // Rafraîchir le statut de suppression lors du changement de session
   useEffect(() => {
     refreshDeletionStatus();
-  }, [session]);
+  }, [session, refreshDeletionStatus]);
 
   return (
     <AuthContext.Provider

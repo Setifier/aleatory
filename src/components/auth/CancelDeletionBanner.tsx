@@ -28,7 +28,7 @@ const CancelDeletionBanner = ({
       } else {
         setError(result.error || "Erreur lors de l'annulation");
       }
-    } catch (error) {
+    } catch {
       setError("Erreur inattendue lors de l'annulation");
     } finally {
       setLoading(false);
@@ -47,7 +47,7 @@ const CancelDeletionBanner = ({
   };
 
   const getUrgencyColor = () => {
-    if (daysRemaining <= 1) return "bg-red-50 border-red-200";
+    if (daysRemaining <= 1) return "bg-red-100 border-red-300";
     if (daysRemaining <= 3) return "bg-orange-50 border-orange-200";
     return "bg-yellow-50 border-yellow-200";
   };

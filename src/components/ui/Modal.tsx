@@ -43,7 +43,7 @@ const Modal = memo(({ isOpen, result, items, onClose }: ModalProps) => {
       setIsFinalResult(false); // Réinitialise pour la prochaine ouverture
       setShowButton(false); // Réinitialise l'affichage du bouton
     }
-  }, [isOpen, result, items]);
+  }, [isOpen, result, items, isRolling]);
 
   const handleRelancerClick = useCallback(() => {
     setIsRolling(false);

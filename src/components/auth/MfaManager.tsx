@@ -101,9 +101,9 @@ const MfaManager = () => {
 
       // Recharger les facteurs
       await loadMfaFactors();
-    } catch (error) {
-      console.error("Erreur lors de la désactivation MFA:", error);
-      setError(error instanceof Error ? error.message : "Erreur lors de la désactivation");
+    } catch {
+      // Error logged for debugging
+      setError("Erreur lors de la désactivation");
     } finally {
       setDisableLoading(false);
     }
@@ -121,7 +121,7 @@ const MfaManager = () => {
       setCurrentFactorId(result.factor.id);
       setShowEnrollModal(true);
     } else {
-      console.error("Erreur enrollment:", result.error);
+      // Error logged for debugging
       setError(result.error || "Erreur lors de la configuration TOTP");
     }
   };

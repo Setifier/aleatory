@@ -69,7 +69,7 @@ export const saveItem = async (
       return { success: false, error: `"${normalizedName}" est déjà enregistré` };
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("saved_items")
       .insert([
         {

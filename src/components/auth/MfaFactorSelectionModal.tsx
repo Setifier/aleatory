@@ -155,7 +155,7 @@ const MfaFactorSelectionModal = ({
               onClick={() => setStep("select")}
               label="← Retour"
               className="flex-1 bg-gray-200 text-gray-700 hover:bg-gray-300"
-              disabled={loading}
+              disabled={isLoading}
             />
           )}
           

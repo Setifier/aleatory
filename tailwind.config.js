@@ -3,6 +3,10 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'nunito': ['Nunito', 'sans-serif'],
+      },
       colors: {
         primary: {
           50: "#f4f3ff",
@@ -40,6 +44,44 @@ export default {
           800: "#484971",
           900: "#181854",
         },
+      },
+      animation: {
+        "modal-pulse": "modalPulse 2s ease-in-out infinite",
+        "spin-slow": "spin 3s linear infinite",
+        "bounce-slow": "bounce 2s infinite",
+        "glow": "glow 2s ease-in-out infinite alternate",
+        "float": "float 3s ease-in-out infinite",
+      },
+      keyframes: {
+        modalPulse: {
+          "0%, 100%": {
+            transform: "scale(1)",
+            borderColor: "#6161d8",
+          },
+          "50%": {
+            transform: "scale(1.05)",
+            borderColor: "#a195f8",
+          },
+        },
+        glow: {
+          "0%": {
+            boxShadow: "0 0 5px #6161d8, 0 0 10px #6161d8, 0 0 15px #6161d8",
+          },
+          "100%": {
+            boxShadow: "0 0 10px #a195f8, 0 0 20px #a195f8, 0 0 30px #a195f8",
+          },
+        },
+        float: {
+          "0%, 100%": {
+            transform: "translateY(0px)",
+          },
+          "50%": {
+            transform: "translateY(-10px)",
+          },
+        },
+      },
+      backdropBlur: {
+        xs: "2px",
       },
     },
   },

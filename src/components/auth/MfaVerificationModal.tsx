@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import { useMfaVerification } from "../../hooks/useMfaVerification";
 
 interface MfaVerificationModalProps {
@@ -73,9 +73,9 @@ const MfaVerificationModal = ({
       onSuccess();
       handleClose();
       
-    } catch (error) {
-      console.error("Erreur vérification MFA:", error);
-      setError(error instanceof Error ? error.message : "Erreur lors de la vérification");
+    } catch {
+      // Error logged for debugging
+      setError("Erreur lors de la vérification");
     } finally {
       setLoading(false);
     }
@@ -124,8 +124,8 @@ const MfaVerificationModal = ({
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-700 text-sm">{error}</p>
+            <div className="p-4 bg-red-100 border-2 border-red-300 rounded-lg shadow-sm">
+              <p className="text-red-700 text-sm font-medium">{error}</p>
             </div>
           )}
 

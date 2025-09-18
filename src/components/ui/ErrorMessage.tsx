@@ -12,8 +12,8 @@ const ErrorMessage = ({
   onDismiss,
 }: ErrorMessageProps) => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
-  const hideTimerRef = useRef<NodeJS.Timeout>();
-  const dismissTimerRef = useRef<NodeJS.Timeout>();
+  const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const dismissTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fonction pour fermer le message avec nettoyage des timers
   const handleClose = useCallback(() => {
@@ -75,7 +75,7 @@ const ErrorMessage = ({
           : "opacity-0 -translate-y-2 scale-95"
       }`}
     >
-      <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between shadow-sm">
+      <div className="bg-red-100 border-2 border-red-300 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between shadow-md">
         <div className="flex items-center">
           {/* Icône d'erreur */}
           <svg

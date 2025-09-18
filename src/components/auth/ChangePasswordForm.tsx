@@ -2,6 +2,10 @@ import { useState } from "react";
 import { UserAuth } from "../../context/AuthContext";
 import MfaVerificationModal from "./MfaVerificationModal";
 
+interface SessionWithAal {
+  aal?: 'aal1' | 'aal2';
+}
+
 interface ChangePasswordFormProps {
   onCancel: () => void;
 }
@@ -23,6 +27,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
 
   const auth = UserAuth();
 
@@ -55,7 +60,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
       const { data: factors } = await supabase.auth.mfa.listFactors();
       const hasMfa = factors?.all && factors.all.length > 0;
 
-      if (hasMfa && auth?.session?.aal !== 'aal2') {
+      if (hasMfa && (auth?.session as SessionWithAal)?.aal !== 'aal2') {
         // MFA requis - stocker les données et montrer la modale
         setPendingPasswordData({
           current: currentPassword,
@@ -68,7 +73,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
 
       // Pas de MFA ou déjà AAL2 - procéder directement
       await performPasswordUpdate(currentPassword, newPassword);
-    } catch (error) {
+    } catch {
       setError("Une erreur est survenue. Veuillez réessayer.");
       console.error("Erreur changement mot de passe:", error);
       setIsLoading(false);
@@ -91,7 +96,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
       } else {
         setError(result?.error || "Erreur lors de la modification du mot de passe");
       }
-    } catch (error) {
+    } catch {
       setError("Une erreur est survenue. Veuillez réessayer.");
       console.error("Erreur changement mot de passe:", error);
     } finally {
@@ -118,7 +123,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
     <button
       type="button"
       onClick={onClick}
-      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+      className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors flex items-center"
       tabIndex={-1}
     >
       {show ? (
@@ -146,18 +151,18 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Mot de passe actuel
           </label>
-          <div className="relative">
+          <div className="flex">
             <input
               type={showCurrentPassword ? "text" : "password"}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
               disabled={isLoading}
             />
-            <EyeIcon 
-              show={showCurrentPassword} 
-              onClick={() => setShowCurrentPassword(!showCurrentPassword)} 
+            <EyeIcon
+              show={showCurrentPassword}
+              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
             />
           </div>
         </div>
@@ -167,19 +172,19 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Nouveau mot de passe
           </label>
-          <div className="relative">
+          <div className="flex">
             <input
               type={showNewPassword ? "text" : "password"}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
               disabled={isLoading}
               minLength={8}
             />
-            <EyeIcon 
-              show={showNewPassword} 
-              onClick={() => setShowNewPassword(!showNewPassword)} 
+            <EyeIcon
+              show={showNewPassword}
+              onClick={() => setShowNewPassword(!showNewPassword)}
             />
           </div>
           <p className="text-xs text-gray-500 mt-1">
@@ -192,26 +197,26 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Confirmer le nouveau mot de passe
           </label>
-          <div className="relative">
+          <div className="flex">
             <input
               type={showConfirmPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
               disabled={isLoading}
             />
-            <EyeIcon 
-              show={showConfirmPassword} 
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+            <EyeIcon
+              show={showConfirmPassword}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             />
           </div>
         </div>
 
         {/* Messages */}
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-700 text-sm">{error}</p>
+          <div className="p-4 bg-red-100 border-2 border-red-300 rounded-lg shadow-sm">
+            <p className="text-red-700 text-sm font-medium">{error}</p>
           </div>
         )}
 

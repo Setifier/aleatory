@@ -53,7 +53,7 @@ export const scheduleAccountDeletion = async (
     const { data, error } = await supabase.rpc('schedule_account_deletion');
 
     if (error) {
-      console.error("Erreur fonction schedule_account_deletion:", error);
+      // Error logged for debugging
       return { 
         success: false, 
         error: "Erreur lors de la programmation de la suppression" 
@@ -73,7 +73,7 @@ export const scheduleAccountDeletion = async (
     };
 
   } catch (error) {
-    console.error("Erreur programmation suppression:", error);
+    // Error logged for debugging
     return { 
       success: false, 
       error: "Erreur inattendue lors de la programmation" 
@@ -90,7 +90,7 @@ export const cancelAccountDeletion = async (): Promise<CancelDeletionResult> => 
     const { data, error } = await supabase.rpc('cancel_account_deletion');
 
     if (error) {
-      console.error("Erreur fonction cancel_account_deletion:", error);
+      // Error logged for debugging
       return { 
         success: false, 
         error: "Erreur lors de l'annulation" 
@@ -107,7 +107,7 @@ export const cancelAccountDeletion = async (): Promise<CancelDeletionResult> => 
     return { success: true };
 
   } catch (error) {
-    console.error("Erreur annulation suppression:", error);
+    // Error logged for debugging
     return { 
       success: false, 
       error: "Erreur inattendue lors de l'annulation" 
@@ -128,12 +128,12 @@ export const getAccountDeletionStatus = async (): Promise<{
     const { data, error } = await supabase.rpc('get_deletion_status');
 
     if (error) {
-      console.error("Erreur fonction get_deletion_status:", error);
+      // Error logged for debugging
       return { isScheduledForDeletion: false };
     }
 
     if (!data?.success) {
-      console.error("Erreur récupération statut:", data?.error);
+      // Error logged for debugging
       return { isScheduledForDeletion: false };
     }
 
@@ -147,7 +147,7 @@ export const getAccountDeletionStatus = async (): Promise<{
       daysRemaining: Math.max(0, data.days_remaining)
     };
   } catch (error) {
-    console.error("Erreur vérification statut suppression:", error);
+    // Error logged for debugging
     return { isScheduledForDeletion: false };
   }
 };

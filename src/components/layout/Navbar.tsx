@@ -4,6 +4,7 @@ import { UserAuth } from "../../context/AuthContext";
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const auth = UserAuth();
 
@@ -32,16 +33,15 @@ const Navbar = () => {
     try {
       const result = await auth?.signOut();
       if (result?.success) {
-        console.log("Déconnexion réussie ! Session terminée.");
-        // La session sera automatiquement mise à null par onAuthStateChange
-        // Pas besoin de redirection, l'utilisateur verra le changement d'état
+        window.location.href = '/signin';
       } else {
         console.error("Erreur lors de la déconnexion:", result?.error);
       }
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      console.error('Erreur lors de la déconnexion:', error);
     } finally {
       setIsDropdownOpen(false);
+      setShowSignOutModal(false);
     }
   };
 
@@ -103,7 +103,10 @@ const Navbar = () => {
                     <div className="border-t border-secondary-200 my-1"></div>
                     
                     <button
-                      onClick={handleSignOut}
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        setShowSignOutModal(true);
+                      }}
                       className="block w-full text-left px-4 py-2 text-lg text-accent-700 hover:bg-secondary-50 transition-colors"
                     >
                       Se déconnecter
@@ -123,6 +126,34 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Modale de confirmation déconnexion */}
+      {showSignOutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Se déconnecter ?
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Vous allez être déconnecté et redirigé vers la page de connexion.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowSignOutModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex-1 px-4 py-2 bg-primary-500 text-white font-medium rounded-md hover:bg-primary-600 transition-colors"
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

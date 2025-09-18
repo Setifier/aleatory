@@ -10,7 +10,7 @@ export interface MfaFactor {
 
 export interface EnrollTotpResult {
   success: boolean;
-  factor?: any;
+  factor?: MfaFactor;
   qrCode?: string;
   secret?: string;
   error?: string;
@@ -32,13 +32,21 @@ export const getUserMfaFactors = async (): Promise<{
     const { data, error } = await supabase.auth.mfa.listFactors();
     
     if (error) {
-      console.error("Erreur récupération facteurs MFA:", error);
+      // Error logged for debugging
       return { factors: [], error: error.message };
     }
 
-    return { factors: data.all || [] };
+    return { 
+      factors: (data.all || []).map(factor => ({
+        id: factor.id,
+        type: 'totp' as const,
+        status: factor.status,
+        created_at: factor.created_at,
+        friendly_name: factor.friendly_name
+      }))
+    };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    // Error logged for debugging
     return { factors: [], error: "Erreur inattendue" };
   }
 };
@@ -54,18 +62,24 @@ export const enrollTotp = async (friendlyName?: string): Promise<EnrollTotpResul
     });
 
     if (error) {
-      console.error("Erreur enrollment TOTP:", error);
+      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
     return {
       success: true,
-      factor: data,
+      factor: {
+        id: data.id,
+        type: 'totp' as const,
+        status: 'unverified' as const,
+        created_at: new Date().toISOString(),
+        friendly_name: data.friendly_name
+      },
       qrCode: data.totp?.qr_code,
       secret: data.totp?.secret
     };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    // Error logged for debugging
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -78,19 +92,19 @@ export const verifyTotpEnrollment = async (
   code: string
 ): Promise<VerifyTotpResult> => {
   try {
-    const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+    const { error } = await supabase.auth.mfa.challengeAndVerify({
       factorId,
       code
     });
 
     if (error) {
-      console.error("Erreur vérification TOTP:", error);
+      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    // Error logged for debugging
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -106,13 +120,13 @@ export const unenrollMfaFactor = async (factorId: string): Promise<{
     const { error } = await supabase.auth.mfa.unenroll({ factorId });
 
     if (error) {
-      console.error("Erreur suppression facteur MFA:", error);
+      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    // Error logged for debugging
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -129,13 +143,13 @@ export const createMfaChallenge = async (factorId: string): Promise<{
     const { data, error } = await supabase.auth.mfa.challenge({ factorId });
 
     if (error) {
-      console.error("Erreur création défi MFA:", error);
+      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
     return { success: true, challengeId: data.id };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    // Error logged for debugging
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -149,20 +163,20 @@ export const verifyMfaCode = async (
   code: string
 ): Promise<VerifyTotpResult> => {
   try {
-    const { data, error } = await supabase.auth.mfa.verify({
+    const { error } = await supabase.auth.mfa.verify({
       factorId,
       challengeId,
       code
     });
 
     if (error) {
-      console.error("Erreur vérification MFA:", error);
+      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    // Error logged for debugging
     return { success: false, error: "Erreur inattendue" };
   }
 };

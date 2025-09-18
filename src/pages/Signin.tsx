@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../components/ui/Button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
 
 const Signin = () => {
@@ -10,14 +10,29 @@ const Signin = () => {
   const [loading, setLoading] = useState(false);
   const [mfaCode, setMfaCode] = useState("");
   const [showMfaStep, setShowMfaStep] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [searchParams] = useSearchParams();
 
   const auth = UserAuth();
+  const navigate = useNavigate();
+
   // On vérifie que le contexte d'authentification est disponible
   if (!auth) {
     return null; // Si le contexte n'est pas disponible, on ne rend rien
   }
-  const { signInUser, mfaChallenge, verifyMfaAndSignIn } = auth;
-  const navigate = useNavigate();
+  const { signInUser, verifyMfaAndSignIn } = auth;
+
+  // Vérifier si on vient d'un reset de mot de passe réussi
+  useEffect(() => {
+    const resetSuccess = searchParams.get('reset');
+    if (resetSuccess === 'success') {
+      setSuccessMessage('Mot de passe mis à jour avec succès ! Vous pouvez maintenant vous connecter.');
+      // Nettoyer l'URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +42,9 @@ const Signin = () => {
     try {
       const result = await signInUser(email, password);
       if (result.success) {
-        console.log("Connexion réussie ! Redirection...");
         navigate("/");
       } else if (result.requiresMfa) {
         // MFA requis - passer à l'étape de saisie du code
-        console.log("🔥 Interface MFA activée");
         setShowMfaStep(true);
         setError(""); // Pas d'erreur, juste MFA requis
         // Empêcher toute redirection automatique
@@ -39,7 +52,7 @@ const Signin = () => {
       } else {
         setError(result.error?.message || "Erreur de connexion");
       }
-    } catch (error) {
+    } catch {
       setError("Une erreur est survenue lors de la connexion");
     } finally {
       setLoading(false);
@@ -54,12 +67,11 @@ const Signin = () => {
     try {
       const result = await verifyMfaAndSignIn(mfaCode);
       if (result.success) {
-        console.log("Connexion MFA réussie ! Redirection...");
         navigate("/");
       } else {
         setError(result.error?.message || "Code invalide");
       }
-    } catch (error) {
+    } catch {
       setError("Erreur lors de la vérification MFA");
     } finally {
       setLoading(false);
@@ -79,7 +91,7 @@ const Signin = () => {
           // Interface MFA
           <form className="mt-8 space-y-6" onSubmit={handleMfaSubmit}>
             {error && (
-              <div className="text-accent-600 text-sm text-center bg-accent-50 border border-accent-200 px-3 py-2 rounded">
+              <div className="text-red-700 text-sm text-center bg-red-100 border-2 border-red-300 px-4 py-3 rounded-lg font-medium shadow-sm">
                 {error}
               </div>
             )}
@@ -111,12 +123,11 @@ const Signin = () => {
                       try {
                         const result = await verifyMfaAndSignIn(value);
                         if (result.success) {
-                          console.log("Connexion MFA réussie ! Redirection...");
                           navigate("/");
                         } else {
                           setError(result.error?.message || "Code invalide");
                         }
-                      } catch (error) {
+                      } catch {
                         setError("Erreur lors de la vérification MFA");
                       } finally {
                         setLoading(false);
@@ -155,8 +166,14 @@ const Signin = () => {
           // Interface de connexion normale
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="text-accent-600 text-sm text-center bg-accent-50 border border-accent-200 px-3 py-2 rounded">
+            <div className="text-red-700 text-sm text-center bg-red-100 border-2 border-red-300 px-4 py-3 rounded-lg font-medium shadow-sm">
               {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="text-green-600 text-sm text-center bg-green-50 border border-green-200 px-3 py-2 rounded">
+              {successMessage}
             </div>
           )}
 
@@ -181,17 +198,44 @@ const Signin = () => {
               <label htmlFor="password" className="sr-only">
                 Mot de passe
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-secondary-300 placeholder-secondary-500 text-accent-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Mot de passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="flex">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className="appearance-none rounded-l-lg relative block w-full px-3 py-2 border border-r-0 border-secondary-300 placeholder-secondary-500 text-accent-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                  placeholder="Mot de passe"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="px-3 py-2 bg-gray-100 border border-l-0 border-secondary-300 rounded-r-lg text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors flex items-center"
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
+          </div>
+
+          <div className="text-right">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-primary-600 hover:text-primary-500 transition-colors"
+            >
+              Mot de passe oublié ?
+            </Link>
           </div>
 
           <div>

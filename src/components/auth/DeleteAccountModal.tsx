@@ -3,7 +3,7 @@ import Button from "../ui/Button";
 import ErrorMessage from "../ui/ErrorMessage";
 import SimpleModal from "../ui/SimpleModal";
 import MfaVerificationModal from "./MfaVerificationModal";
-import { scheduleAccountDeletion, validateDeleteAccountData, type DeleteAccountData } from "../../lib/accountService";
+import { scheduleAccountDeletion, validateDeleteAccountData } from "../../lib/accountService";
 import { getUserMfaFactors } from "../../lib/mfaService";
 
 interface DeleteAccountModalProps {
@@ -64,7 +64,7 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
         setStep("confirmation");
         setLoading(false);
       }
-    } catch (error) {
+    } catch {
       setError("Erreur lors de la vérification MFA");
       setLoading(false);
     }
@@ -101,7 +101,7 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
       } else {
         setError(result.error || "Erreur lors de la programmation de la suppression");
       }
-    } catch (error) {
+    } catch {
       setError("Erreur inattendue lors de la suppression");
     } finally {
       setLoading(false);
@@ -155,7 +155,7 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
               </div>
 
               <div className="mb-6">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4 mb-4 shadow-sm">
                   <h4 className="font-semibold text-red-800 mb-2">⚠️ Cette action est irréversible</h4>
                   <ul className="text-red-700 text-sm space-y-1">
                     <li>• Toutes vos données seront définitivement supprimées</li>
@@ -257,7 +257,7 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
                 </h3>
               </div>
 
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4 mb-6 shadow-sm">
                 <p className="text-red-800 font-semibold mb-2">
                   Dernière étape avant la programmation de la suppression
                 </p>
