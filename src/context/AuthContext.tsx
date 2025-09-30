@@ -1,16 +1,36 @@
-import { createContext, useEffect, useState, useContext, useCallback } from "react";
+import {
+  createContext,
+  useEffect,
+  useState,
+  useContext,
+} from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 import { isMfaEnabledInPreferences } from "../lib/mfaPreferences";
 import { getAccountDeletionStatus } from "../lib/accountService";
 
 interface SessionWithAal extends Session {
-  aal?: 'aal1' | 'aal2';
+  aal?: "aal1" | "aal2";
 }
+
+// Type pour les erreurs Supabase
+type SupabaseError = {
+  message: string;
+  status?: number;
+  code?: string;
+};
+
+// Helper pour extraire le message d'une erreur
+export const getErrorMessage = (error: string | SupabaseError): string => {
+  if (typeof error === 'string') {
+    return error;
+  }
+  return error.message;
+};
 
 interface AuthResult {
   success: boolean;
-  error?: string | Error;
+  error?: string | SupabaseError;
   data?: unknown;
   needsEmailConfirmation?: boolean | null;
   requiresMfa?: boolean;
@@ -31,7 +51,10 @@ interface AuthContextType {
   mfaChallenge: { factorId: string; challengeId: string } | null;
   verifyMfaAndSignIn: (code: string) => Promise<AuthResult>;
   isMfaRequired: boolean;
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
+  updatePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<AuthResult>;
   // Suppression de compte
   isAccountScheduledForDeletion: boolean;
   accountDeletionDate?: Date;
@@ -43,13 +66,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
-  const [mfaChallenge, setMfaChallenge] = useState<{ factorId: string; challengeId: string } | null>(null);
+  const [mfaChallenge, setMfaChallenge] = useState<{
+    factorId: string;
+    challengeId: string;
+  } | null>(null);
   const [isMfaRequired, setIsMfaRequired] = useState(false);
-  
+
   // États pour la suppression de compte
-  const [isAccountScheduledForDeletion, setIsAccountScheduledForDeletion] = useState(false);
-  const [accountDeletionDate, setAccountDeletionDate] = useState<Date | undefined>(undefined);
-  const [accountDeletionDaysRemaining, setAccountDeletionDaysRemaining] = useState<number | undefined>(undefined);
+  const [isAccountScheduledForDeletion, setIsAccountScheduledForDeletion] =
+    useState(false);
+  const [accountDeletionDate, setAccountDeletionDate] = useState<
+    Date | undefined
+  >(undefined);
+  const [accountDeletionDaysRemaining, setAccountDeletionDaysRemaining] =
+    useState<number | undefined>(undefined);
 
   // Sign Up
   const signUpNewUser = async (
@@ -75,11 +105,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return {
           success: false,
           error: error.message || "Utilisateur déjà enregistré",
-          isUserAlreadyExists: true
+          isUserAlreadyExists: true,
         };
       }
 
-      return { success: false, error: error.message || "Erreur lors de l'inscription" };
+      return {
+        success: false,
+        error: error.message || "Erreur lors de l'inscription",
+      };
     }
 
     return {
@@ -99,38 +132,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error("Erreur lors de la connexion:", error);
-        return { success: false, error };
+        return { success: false, error: error.message || "Erreur de connexion" };
       }
 
       // Vérifier d'abord si l'utilisateur a des facteurs MFA
       const { data: factors } = await supabase.auth.mfa.listFactors();
 
       // Si l'utilisateur a des facteurs MFA ET que MFA est activé dans les préférences
-      if (factors?.all && factors.all.length > 0 && isMfaEnabledInPreferences()) {
+      if (
+        factors?.all &&
+        factors.all.length > 0 &&
+        isMfaEnabledInPreferences()
+      ) {
         const aal = (data.session as SessionWithAal)?.aal;
-        
+
         // Si pas AAL2, alors MFA requis (peu importe si aal1, undefined, etc.)
-        if (aal !== 'aal2') {
+        if (aal !== "aal2") {
           const factor = factors.all[0];
-          
+
           // IMPORTANT: Créer le challenge AVANT de se déconnecter
-          const { data: challenge } = await supabase.auth.mfa.challenge({ 
-            factorId: factor.id 
+          const { data: challenge } = await supabase.auth.mfa.challenge({
+            factorId: factor.id,
           });
-          
+
           if (challenge) {
             // Marquer MFA comme requis AVANT de définir le challenge
             setIsMfaRequired(true);
-            
+
             setMfaChallenge({
               factorId: factor.id,
-              challengeId: challenge.id
+              challengeId: challenge.id,
             });
-            
-            return { 
-              success: false, 
+
+            return {
+              success: false,
               requiresMfa: true,
-              message: "Code d'authentification requis"
+              message: "Code d'authentification requis",
             };
           } else {
             console.error("Impossible de créer le challenge MFA");
@@ -139,22 +176,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Si on arrive ici sans session, c'est que MFA est requis
-      if (!data.session && data.user && factors?.all && factors.all.length > 0) {
+      if (
+        !data.session &&
+        data.user &&
+        factors?.all &&
+        factors.all.length > 0
+      ) {
         const factor = factors.all[0];
-        const { data: challenge } = await supabase.auth.mfa.challenge({ 
-          factorId: factor.id 
+        const { data: challenge } = await supabase.auth.mfa.challenge({
+          factorId: factor.id,
         });
-        
+
         if (challenge) {
           setMfaChallenge({
             factorId: factor.id,
-            challengeId: challenge.id
+            challengeId: challenge.id,
           });
-          
-          return { 
-            success: false, 
+
+          return {
+            success: false,
             requiresMfa: true,
-            message: "Code d'authentification requis"
+            message: "Code d'authentification requis",
           };
         }
       }
@@ -176,18 +218,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data, error } = await supabase.auth.mfa.verify({
         factorId: mfaChallenge.factorId,
         challengeId: mfaChallenge.challengeId,
-        code: code
+        code: code,
       });
 
       if (error) {
         console.error("Erreur vérification MFA:", error);
-        return { success: false, error };
+        return { success: false, error: error.message || "Erreur de vérification MFA" };
       }
 
       // Réinitialiser le challenge MFA et l'état
       setMfaChallenge(null);
       setIsMfaRequired(false);
-      
+
       return { success: true, data };
     } catch (error) {
       console.error("Erreur lors de la vérification MFA:", error);
@@ -200,7 +242,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
@@ -215,7 +259,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Erreur lors de la déconnexion:", error);
-        return { success: false, error };
+        return { success: false, error: error.message || "Erreur de déconnexion" };
       }
       return { success: true };
     } catch (error) {
@@ -225,7 +269,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Update Password
-  const updatePassword = async (_currentPassword: string, newPassword: string) => {
+  const updatePassword = async (
+    _currentPassword: string,
+    newPassword: string
+  ) => {
     try {
       if (!session?.user?.email) {
         return { success: false, error: "Utilisateur non connecté" };
@@ -235,34 +282,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: factors } = await supabase.auth.mfa.listFactors();
       const hasMfa = factors?.all && factors.all.length > 0;
       const isMfaEnabledByUser = isMfaEnabledInPreferences();
-      
+
       // Si MFA activé ET préférence utilisateur MFA activée, vérifier le niveau AAL
-      if (hasMfa && isMfaEnabledByUser && (session as SessionWithAal).aal !== 'aal2') {
-        return { 
-          success: false, 
-          error: "Veuillez vous reconnecter avec votre code d'authentification pour modifier votre mot de passe",
-          requiresReauth: true 
+      if (
+        hasMfa &&
+        isMfaEnabledByUser &&
+        (session as SessionWithAal).aal !== "aal2"
+      ) {
+        return {
+          success: false,
+          error:
+            "Veuillez vous reconnecter avec votre code d'authentification pour modifier votre mot de passe",
+          requiresReauth: true,
         };
       }
 
       // D'abord, vérifier le mot de passe actuel
       // On ne peut pas utiliser signInWithPassword car cela créerait une nouvelle session
       // On va plutôt faire une vérification différente si nécessaire
-      
+
       // Tenter la mise à jour directement
       const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (updateError) {
-        console.error("Erreur lors de la mise à jour du mot de passe:", updateError);
-        
+        console.error(
+          "Erreur lors de la mise à jour du mot de passe:",
+          updateError
+        );
+
         // Si erreur liée à la vérification du mot de passe actuel
-        if (updateError.message?.includes('invalid')) {
+        if (updateError.message?.includes("invalid")) {
           return { success: false, error: "Mot de passe actuel incorrect" };
         }
-        
-        return { success: false, error: "Erreur lors de la mise à jour du mot de passe" };
+
+        return {
+          success: false,
+          error: "Erreur lors de la mise à jour du mot de passe",
+        };
       }
 
       return { success: true };
@@ -273,7 +331,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Rafraîchir le statut de suppression de compte
-  const refreshDeletionStatus = useCallback(async () => {
+  const refreshDeletionStatus = async () => {
     if (session) {
       const status = await getAccountDeletionStatus();
       setIsAccountScheduledForDeletion(status.isScheduledForDeletion);
@@ -285,28 +343,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setAccountDeletionDate(undefined);
       setAccountDeletionDaysRemaining(undefined);
     }
-  }, [session]);
+  };
 
   // Rafraîchir le statut de suppression lors du changement de session
   useEffect(() => {
     refreshDeletionStatus();
-  }, [session, refreshDeletionStatus]);
+  }, [session]);
 
   return (
     <AuthContext.Provider
-      value={{ 
-        session, 
-        signUpNewUser, 
-        signOut, 
-        signInUser, 
-        mfaChallenge, 
-        verifyMfaAndSignIn, 
-        isMfaRequired, 
+      value={{
+        session,
+        signUpNewUser,
+        signOut,
+        signInUser,
+        mfaChallenge,
+        verifyMfaAndSignIn,
+        isMfaRequired,
         updatePassword,
         isAccountScheduledForDeletion,
         accountDeletionDate,
         accountDeletionDaysRemaining,
-        refreshDeletionStatus
+        refreshDeletionStatus,
       }}
     >
       {children}
@@ -317,7 +375,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 export const UserAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('UserAuth doit être utilisé dans un AuthProvider');
+    throw new Error("UserAuth doit être utilisé dans un AuthProvider");
   }
   return context;
 };

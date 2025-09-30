@@ -2,13 +2,18 @@ import { useState } from "react";
 import { SavedItem } from "../../lib/savedItemsService";
 import Button from "../ui/Button";
 import ConfirmModal from "../ui/ConfirmModal";
+import SearchBar from "../ui/SearchBar";
+import FolderAssignmentMenu from "./FolderAssignmentMenu";
+import QuickAddItemForm from "./QuickAddItemForm";
 
 interface SavedItemsManagerProps {
   savedItems: SavedItem[];
   isLoading: boolean;
   onDeleteItem: (itemName: string) => void;
   onAddToLottery: (itemName: string) => void;
+  onSaveItem?: (itemName: string) => Promise<boolean>; // Fonction pour sauvegarder
   lotteryItems: string[]; // Pour savoir quels items sont déjà dans le tirage
+  onRefreshItems: () => void; // Pour rafraîchir après assignation de dossier
 }
 
 const SavedItemsManager = ({
@@ -16,7 +21,9 @@ const SavedItemsManager = ({
   isLoading,
   onDeleteItem,
   onAddToLottery,
+  onSaveItem,
   lotteryItems,
+  onRefreshItems,
 }: SavedItemsManagerProps) => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -30,6 +37,20 @@ const SavedItemsManager = ({
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [folderMenu, setFolderMenu] = useState<{
+    isOpen: boolean;
+    itemId: number;
+    itemName: string;
+    currentFolderId?: number | null;
+    position: { x: number; y: number };
+  }>({
+    isOpen: false,
+    itemId: 0,
+    itemName: "",
+    currentFolderId: null,
+    position: { x: 0, y: 0 },
+  });
 
   // Filtrer les items selon la recherche
   const filteredItems = savedItems.filter((item) =>
@@ -49,6 +70,39 @@ const SavedItemsManager = ({
 
   const handleAddToLottery = (itemName: string) => {
     onAddToLottery(itemName);
+  };
+
+  const handleOpenFolderMenu = (
+    event: React.MouseEvent,
+    item: SavedItem
+  ) => {
+    event.preventDefault(); // Empêcher le clic droit par défaut
+    event.stopPropagation();
+    setFolderMenu({
+      isOpen: true,
+      itemId: item.id,
+      itemName: item.item_name,
+      currentFolderId: item.folder_id,
+      position: {
+        x: event.clientX,
+        y: event.clientY,
+      },
+    });
+  };
+
+  const closeFolderMenu = () => {
+    setFolderMenu({
+      isOpen: false,
+      itemId: 0,
+      itemName: "",
+      currentFolderId: null,
+      position: { x: 0, y: 0 },
+    });
+  };
+
+  const handleFolderAssignmentChange = () => {
+    // Rafraîchir la liste complète après assignation
+    onRefreshItems();
   };
 
   if (isLoading) {
@@ -73,9 +127,23 @@ const SavedItemsManager = ({
       <div className="bg-gradient-to-br from-white to-secondary-50 rounded-xl p-4 border border-secondary-200 shadow-md">
         {/* Header */}
         <div className="flex items-center justify-between gap-2 mb-2">
-          <h3 className="text-xl font-semibold text-accent-800">
-            💾 Éléments sauvegardés
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xl font-semibold text-accent-800">
+              💾 Éléments sauvegardés
+            </h3>
+            {onSaveItem && (
+              <button
+                onClick={() => {
+                  setShowQuickAdd(true);
+                  setIsExpanded(true); // Forcer l'expansion
+                }}
+                className="text-primary-500 hover:text-primary-700 transition-colors p-1 rounded hover:bg-primary-50"
+                title="Ajouter un élément"
+              >
+                ➕
+              </button>
+            )}
+          </div>
           {savedItems.length > 0 && (
             <span className="bg-primary-100 text-primary-700 px-2 py-1 rounded-full text-xs font-medium items-center">
               {savedItems.length}
@@ -89,6 +157,14 @@ const SavedItemsManager = ({
             isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
+          {/* Formulaire d'ajout rapide */}
+          {showQuickAdd && onSaveItem && (
+            <QuickAddItemForm
+              onAddItem={onSaveItem}
+              onCancel={() => setShowQuickAdd(false)}
+            />
+          )}
+
           {savedItems.length === 0 ? (
             <div className="text-center py-6">
               <div className="text-4xl mb-2 opacity-50">💾</div>
@@ -96,7 +172,7 @@ const SavedItemsManager = ({
                 Aucun élément sauvegardé
               </p>
               <p className="text-accent-500 text-xs">
-                Sauvegardez depuis le tirage
+                {onSaveItem ? "Cliquez sur ➕ pour ajouter un élément" : "Sauvegardez depuis le tirage"}
               </p>
             </div>
           ) : (
@@ -104,24 +180,11 @@ const SavedItemsManager = ({
               {/* Barre de recherche */}
               {savedItems.length > 5 && (
                 <div className="mb-4">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Rechercher dans la liste..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
-                    />
-
-                    {searchTerm && (
-                      <button
-                        onClick={() => setSearchTerm("")}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-accent-400 hover:text-accent-600"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
+                  <SearchBar
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    placeholder="Rechercher dans la liste..."
+                  />
                 </div>
               )}
 
@@ -178,6 +241,15 @@ const SavedItemsManager = ({
                               </button>
                             )}
 
+                            {/* Bouton dossier */}
+                            <button
+                              onClick={(e) => handleOpenFolderMenu(e, item)}
+                              className="text-yellow-600 hover:text-yellow-700 transition-colors opacity-0 group-hover:opacity-100 text-sm px-1 py-1 rounded hover:bg-yellow-50"
+                              title="Organiser dans un dossier"
+                            >
+                              📁
+                            </button>
+
                             {/* Bouton supprimer */}
                             <button
                               onClick={() => handleDeleteClick(item.item_name)}
@@ -217,11 +289,6 @@ const SavedItemsManager = ({
                       />
                     )}
                   </div>
-                  <div className="text-center text-sm text-accent-600">
-                    {savedItems.length} élément
-                    {savedItems.length > 1 ? "s" : ""} sauvegardé
-                    {savedItems.length > 1 ? "s" : ""}
-                  </div>
                 </div>
               )}
             </>
@@ -231,7 +298,15 @@ const SavedItemsManager = ({
         {/* Flèche d'expansion en bas au centre */}
         <div className="flex justify-center pt-2">
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => {
+              const newExpanded = !isExpanded;
+              setIsExpanded(newExpanded);
+
+              // Si on ferme la section, fermer aussi le formulaire de création
+              if (!newExpanded && showQuickAdd) {
+                setShowQuickAdd(false);
+              }
+            }}
             className="text-accent-400 hover:text-accent-600 transition-colors pt-2"
           >
             <div
@@ -266,6 +341,17 @@ const SavedItemsManager = ({
           setConfirmModal({ isOpen: false, message: "", action: () => {} })
         }
         isDestructive={true}
+      />
+
+      {/* Menu contextuel pour dossiers */}
+      <FolderAssignmentMenu
+        isOpen={folderMenu.isOpen}
+        onClose={closeFolderMenu}
+        itemId={folderMenu.itemId}
+        itemName={folderMenu.itemName}
+        currentFolderIds={savedItems.find(item => item.id === folderMenu.itemId)?.folder_ids || []}
+        onAssignmentChange={handleFolderAssignmentChange}
+        position={folderMenu.position}
       />
     </>
   );

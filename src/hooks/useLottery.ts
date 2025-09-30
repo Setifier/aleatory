@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { LotteryHistoryService, LotteryHistoryEntry } from "../lib/lotteryHistoryService";
+import { logSupabaseError } from "../lib/logger";
 
 export interface LotteryItem {
   id: string;
@@ -46,7 +47,7 @@ export const useLottery = (isAuthenticated: boolean = false) => {
       const transformedHistory = historyEntries.map(transformHistoryEntry);
       setHistory(transformedHistory);
     } catch (error) {
-      console.error("Erreur lors du chargement de l'historique:", error);
+      logSupabaseError("chargement de l'historique", error);
     } finally {
       setIsLoadingHistory(false);
     }
@@ -64,22 +65,35 @@ export const useLottery = (isAuthenticated: boolean = false) => {
     const trimmedName = name.trim();
     if (!trimmedName) return false;
 
-    // Vérifier les doublons
-    if (items.some(item => item.name.toLowerCase() === trimmedName.toLowerCase())) {
-      setError(`"${trimmedName}" est déjà dans la liste`);
+    // Utiliser la forme fonctionnelle de setState pour éviter la dépendance à items
+    let isDuplicate = false;
+    let errorMessage = '';
+
+    setItems(prev => {
+      // Vérifier les doublons dans le callback
+      if (prev.some(item => item.name.toLowerCase() === trimmedName.toLowerCase())) {
+        isDuplicate = true;
+        errorMessage = `"${trimmedName}" est déjà dans la liste`;
+        return prev; // Ne rien changer
+      }
+
+      const newItem: LotteryItem = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        name: trimmedName,
+        isFromSaved
+      };
+
+      return [...prev, newItem];
+    });
+
+    if (isDuplicate) {
+      setError(errorMessage);
       return false;
     }
 
-    const newItem: LotteryItem = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: trimmedName,
-      isFromSaved
-    };
-
-    setItems(prev => [...prev, newItem]);
     setError(null);
     return true;
-  }, [items]);
+  }, []); // ✅ Plus de dépendances - fonction stable
 
   // Supprimer un item
   const removeItem = useCallback((itemId: string) => {
@@ -141,7 +155,7 @@ export const useLottery = (isAuthenticated: boolean = false) => {
           setHistory(prev => [result, ...prev.slice(0, 9)]);
         }
       } catch (error) {
-        console.error("Erreur lors de la sauvegarde du tirage:", error);
+        logSupabaseError("sauvegarde du tirage", error);
         // Fallback : ajouter en local
         setHistory(prev => [result, ...prev.slice(0, 9)]);
       }
@@ -167,7 +181,10 @@ export const useLottery = (isAuthenticated: boolean = false) => {
 
   // Vider l'historique (local pour invités, base pour connectés)
   const clearHistory = useCallback(async () => {
-    if (isAuthenticated) {
+    // Lire isAuthenticated directement au moment de l'appel
+    const authenticated = isAuthenticated;
+
+    if (authenticated) {
       // Mode connecté : vider en base de données
       const success = await LotteryHistoryService.clearLotteryHistory();
       if (success) {
@@ -181,7 +198,7 @@ export const useLottery = (isAuthenticated: boolean = false) => {
       setCurrentResult(null);
       return true;
     }
-  }, [isAuthenticated]);
+  }, []); // ✅ Plus de dépendances - fonction stable
 
   // Supprimer une entrée spécifique (seulement pour les utilisateurs connectés)
   const deleteHistoryEntry = useCallback(async (entryId: string) => {

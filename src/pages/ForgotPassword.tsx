@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import Button from "../components/ui/Button";
 
@@ -8,6 +8,7 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +28,15 @@ const ForgotPassword = () => {
           `Un email de récupération a été envoyé à ${email}. Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.`
         );
         setEmail("");
+
+        // Rediriger vers la page de connexion après 3 secondes
+        setTimeout(() => {
+          navigate("/signin", {
+            state: {
+              message: "Email de récupération envoyé. Vérifiez votre boîte mail."
+            }
+          });
+        }, 3000);
       }
     } catch {
       setError("Une erreur est survenue. Veuillez réessayer.");
@@ -57,6 +67,9 @@ const ForgotPassword = () => {
           {message && (
             <div className="text-green-600 text-sm text-center bg-green-50 border border-green-200 px-3 py-2 rounded">
               {message}
+              <div className="mt-2 text-xs text-green-500">
+                Redirection vers la page de connexion dans quelques secondes...
+              </div>
             </div>
           )}
 

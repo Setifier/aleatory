@@ -158,6 +158,17 @@ const Home = () => {
     window.dispatchEvent(event);
   };
 
+  // Fonction pour notifier les changements de dossiers
+  const handleFolderAssignmentChange = () => {
+    // Recharger les données des deux côtés
+    loadSavedItems();
+    loadFolders();
+
+    // Notifier les dossiers ouverts qu'ils doivent se rafraîchir
+    const event = new CustomEvent("foldersChanged");
+    window.dispatchEvent(event);
+  };
+
   return (
     <div className="bg-gradient-to-br from-secondary-50 via-white to-accent-50 min-h-screen">
       <div className="max-w-7xl mx-auto py-8 px-4">
@@ -218,6 +229,7 @@ const Home = () => {
                 isLoading={loadingFolders}
                 onCreate={handleCreateFolder}
                 onDelete={handleDeleteFolder}
+                onAddToLottery={handleAddToLottery}
               />
             </div>
           )}
@@ -242,7 +254,9 @@ const Home = () => {
                 isLoading={loadingSavedItems}
                 onDeleteItem={handleDeleteSavedItem}
                 onAddToLottery={handleAddToLottery}
+                onSaveItem={handleSaveItem}
                 lotteryItems={currentLotteryItems}
+                onRefreshItems={handleFolderAssignmentChange}
               />
             </div>
           )}

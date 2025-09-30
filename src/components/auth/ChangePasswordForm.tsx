@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserAuth } from "../../context/AuthContext";
+import { UserAuth, getErrorMessage } from "../../context/AuthContext";
 import MfaVerificationModal from "./MfaVerificationModal";
 
 interface SessionWithAal {
@@ -94,7 +94,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
           onCancel();
         }, 2000);
       } else {
-        setError(result?.error || "Erreur lors de la modification du mot de passe");
+        setError(result?.error ? getErrorMessage(result.error) : "Erreur lors de la modification du mot de passe");
       }
     } catch {
       setError("Une erreur est survenue. Veuillez réessayer.");

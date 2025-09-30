@@ -1,10 +1,29 @@
 import { supabase } from "./supabaseClient";
 import { normalizeText } from "./textUtils";
+import { logSupabaseError } from "./logger";
 
+// Type pour la relation item_folders depuis Supabase
+export type ItemFolderRelation = {
+  folder_id: number;
+};
+
+// Type pour les données brutes venant de Supabase avec les jointures
+export type SavedItemRaw = {
+  id: number;
+  user_id: string;
+  item_name: string;
+  folder_id?: number | null; // Gardé pour compatibilité mais deprecated
+  created_at: string;
+  item_folders?: ItemFolderRelation[]; // Relations depuis la jointure
+};
+
+// Type final exposé par l'API
 export type SavedItem = {
   id: number;
   user_id: string;
   item_name: string;
+  folder_id?: number | null; // Gardé pour compatibilité mais deprecated
+  folder_ids?: number[]; // Nouveau: array des dossiers
   created_at: string;
 };
 
@@ -32,13 +51,13 @@ export const checkItemExists = async (
       .limit(1);
 
     if (error) {
-      console.error("Erreur vérification:", error);
+      logSupabaseError("vérification existence item", error);
       return { exists: false, error: error.message };
     }
 
     return { exists: data && data.length > 0 };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
     return { exists: false, error: "Erreur inattendue" };
   }
 };
@@ -80,18 +99,18 @@ export const saveItem = async (
       .select();
 
     if (error) {
-      console.error("Erreur sauvegarde:", error);
+      logSupabaseError("sauvegarde item", error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
     return { success: false, error: "Erreur inattendue" };
   }
 };
 
-// Charger les items de l'utilisateur
+// Charger les items de l'utilisateur avec leurs dossiers
 export const loadUserItems = async (): Promise<{
   items: SavedItem[];
   error?: string;
@@ -105,20 +124,32 @@ export const loadUserItems = async (): Promise<{
       return { items: [], error: "Utilisateur non connecté" };
     }
 
+    // Charger les items avec leurs relations de dossiers
     const { data, error } = await supabase
       .from("saved_items")
-      .select("*")
+      .select(`
+        *,
+        item_folders (
+          folder_id
+        )
+      `)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Erreur chargement:", error);
+      logSupabaseError("chargement items utilisateur", error);
       return { items: [], error: error.message };
     }
 
-    return { items: data || [] };
+    // Transformer les données pour inclure folder_ids avec types corrects
+    const itemsWithFolders: SavedItem[] = (data as SavedItemRaw[] || []).map(item => ({
+      ...item,
+      folder_ids: (item.item_folders || []).map((rel: ItemFolderRelation) => rel.folder_id)
+    }));
+
+    return { items: itemsWithFolders };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
     return { items: [], error: "Erreur inattendue" };
   }
 };
@@ -152,7 +183,141 @@ export const deleteItem = async (
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
+    return { success: false, error: "Erreur inattendue" };
+  }
+};
+
+// Toggle d'assignation item-dossier (ajouter ou retirer)
+export const toggleItemFolder = async (
+  itemId: number,
+  folderId: number,
+  shouldAssign: boolean
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    console.log("📋 toggleItemFolder appelée avec:", { itemId, folderId, shouldAssign });
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.log("❌ Utilisateur non connecté");
+      return { success: false, error: "Utilisateur non connecté" };
+    }
+
+    console.log("👤 Utilisateur connecté:", user.id);
+
+    if (shouldAssign) {
+      // Ajouter la relation
+      const { error } = await supabase
+        .from("item_folders")
+        .insert({
+          item_id: itemId,
+          folder_id: folderId,
+          user_id: user.id
+        });
+
+      if (error) {
+        // Si l'erreur est due à une contrainte unique, c'est OK
+        if (error.code === '23505') {
+          console.log("✅ Relation déjà existante");
+          return { success: true };
+        }
+        console.error("❌ Erreur insertion relation:", error);
+        return { success: false, error: error.message };
+      }
+
+      console.log("✅ Relation ajoutée");
+      return { success: true };
+    } else {
+      // Supprimer la relation
+      const { error } = await supabase
+        .from("item_folders")
+        .delete()
+        .eq("item_id", itemId)
+        .eq("folder_id", folderId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("❌ Erreur suppression relation:", error);
+        return { success: false, error: error.message };
+      }
+
+      console.log("✅ Relation supprimée");
+      return { success: true };
+    }
+  } catch (error) {
+    console.error("❌ Erreur inattendue:", error);
+    return { success: false, error: "Erreur inattendue" };
+  }
+};
+
+// Assigner un item à un dossier (fonction legacy, garde pour compatibilité)
+export const assignItemToFolder = async (
+  itemId: number,
+  folderId: number | null
+): Promise<{ success: boolean; error?: string }> => {
+  if (folderId === null) {
+    // Pour décocher, on ne fait rien car on utilise maintenant toggleItemFolder
+    return { success: true };
+  }
+
+  return toggleItemFolder(itemId, folderId, true);
+};
+
+// Obtenir les items d'un dossier spécifique (nouvelle version avec item_folders)
+export const getItemsByFolder = async (
+  folderId: number | null
+): Promise<{ success: boolean; error?: string; items?: SavedItem[] }> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Utilisateur non connecté" };
+    }
+
+    if (folderId === null) {
+      // Récupérer les items sans dossier (pas dans item_folders)
+      const { data, error } = await supabase
+        .from("saved_items")
+        .select(`
+          *,
+          item_folders!left (
+            folder_id
+          )
+        `)
+        .eq("user_id", user.id)
+        .is("item_folders.folder_id", null)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Erreur récupération items sans dossier:", error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, items: data || [] };
+    } else {
+      // Récupérer les items d'un dossier spécifique via item_folders
+      const { data, error } = await supabase
+        .from("saved_items")
+        .select(`
+          *,
+          item_folders!inner (
+            folder_id
+          )
+        `)
+        .eq("user_id", user.id)
+        .eq("item_folders.folder_id", folderId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Erreur récupération items par dossier:", error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, items: data || [] };
+    }
+  } catch (error) {
+    logSupabaseError("erreur inattendue", error);
     return { success: false, error: "Erreur inattendue" };
   }
 };

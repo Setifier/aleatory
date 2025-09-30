@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "../components/ui/Button";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { UserAuth } from "../context/AuthContext";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { UserAuth, getErrorMessage } from "../context/AuthContext";
 
 const Signin = () => {
   const [email, setEmail] = useState("");
@@ -13,9 +13,13 @@ const Signin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const auth = UserAuth();
   const navigate = useNavigate();
+
+  // Ref pour stocker le timeout du auto-submit MFA
+  const mfaAutoSubmitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // On vérifie que le contexte d'authentification est disponible
   if (!auth) {
@@ -23,16 +27,49 @@ const Signin = () => {
   }
   const { signInUser, verifyMfaAndSignIn } = auth;
 
-  // Vérifier si on vient d'un reset de mot de passe réussi
+  // Vérifier si on vient d'un reset de mot de passe réussi ou d'un forgot password
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
     const resetSuccess = searchParams.get('reset');
     if (resetSuccess === 'success') {
       setSuccessMessage('Mot de passe mis à jour avec succès ! Vous pouvez maintenant vous connecter.');
-      // Nettoyer l'URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
+
+      // Faire disparaître le message après 10 secondes
+      timeoutId = setTimeout(() => {
+        setSuccessMessage('');
+      }, 10000);
     }
-  }, [searchParams]);
+
+    // Vérifier si on vient de ForgotPassword avec un message
+    const stateMessage = location.state?.message;
+    if (stateMessage) {
+      setSuccessMessage(stateMessage);
+      // Nettoyer l'état pour éviter que le message persiste
+      window.history.replaceState({}, '', window.location.pathname);
+
+      // Faire disparaître le message après 10 secondes
+      // Note: Si les deux conditions sont vraies, on garde le dernier timeout
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setSuccessMessage('');
+      }, 10000);
+    }
+
+    // Cleanup: annuler le timeout si le composant se démonte avant la fin
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [searchParams, location.state]);
+
+  // Cleanup du timeout MFA au démontage du composant
+  useEffect(() => {
+    return () => {
+      if (mfaAutoSubmitTimeoutRef.current) {
+        clearTimeout(mfaAutoSubmitTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +87,7 @@ const Signin = () => {
         // Empêcher toute redirection automatique
         return; // Important : sortir ici
       } else {
-        setError(result.error?.message || "Erreur de connexion");
+        setError(result.error ? getErrorMessage(result.error) : "Erreur de connexion");
       }
     } catch {
       setError("Une erreur est survenue lors de la connexion");
@@ -69,7 +106,7 @@ const Signin = () => {
       if (result.success) {
         navigate("/");
       } else {
-        setError(result.error?.message || "Code invalide");
+        setError(result.error ? getErrorMessage(result.error) : "Code invalide");
       }
     } catch {
       setError("Erreur lors de la vérification MFA");
@@ -113,19 +150,25 @@ const Signin = () => {
                 onChange={(e) => {
                   const value = e.target.value.replace(/\D/g, '').slice(0, 6);
                   setMfaCode(value);
-                  
+
+                  // Annuler tout timeout précédent pour éviter les race conditions
+                  if (mfaAutoSubmitTimeoutRef.current) {
+                    clearTimeout(mfaAutoSubmitTimeoutRef.current);
+                    mfaAutoSubmitTimeoutRef.current = null;
+                  }
+
                   // Auto-soumission dès que 6 chiffres sont saisis
                   if (value.length === 6 && !loading) {
-                    setTimeout(async () => {
+                    mfaAutoSubmitTimeoutRef.current = setTimeout(async () => {
                       setError("");
                       setLoading(true);
-                      
+
                       try {
                         const result = await verifyMfaAndSignIn(value);
                         if (result.success) {
                           navigate("/");
                         } else {
-                          setError(result.error?.message || "Code invalide");
+                          setError(result.error ? getErrorMessage(result.error) : "Code invalide");
                         }
                       } catch {
                         setError("Erreur lors de la vérification MFA");

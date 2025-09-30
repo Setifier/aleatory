@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Button from "../components/ui/Button";
 import { Link, useNavigate } from "react-router-dom";
-import { UserAuth } from "../context/AuthContext";
+import { UserAuth, getErrorMessage } from "../context/AuthContext";
 import { formatAndValidatePseudo } from "../lib/pseudoUtils";
 
 const Signup = () => {
@@ -66,7 +66,7 @@ const Signup = () => {
         // Compte existant - afficher la modale
         setShowAccountExistsModal(true);
       } else {
-        setError(result.error || "Erreur d'inscription");
+        setError(result.error ? getErrorMessage(result.error) : "Erreur d'inscription");
       }
     } catch {
       setError("Une erreur est survenue lors de l'inscription");

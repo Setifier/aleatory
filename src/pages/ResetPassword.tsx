@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import Button from "../components/ui/Button";
 
@@ -10,25 +10,49 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [searchParams] = useSearchParams();
+  const [isValidating, setIsValidating] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Vérifier si on a un token de reset valide
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout | undefined;
 
-    if (!accessToken || !refreshToken) {
-      setError("Lien de réinitialisation invalide ou expiré");
-      return;
-    }
+    const handleAuthCallback = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-    // Établir la session avec les tokens
-    supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
-  }, [searchParams]);
+        if (!isMounted) return;
+
+        if (error || !data.session) {
+          // ❌ Pas de session = lien invalide
+          setError("Lien de réinitialisation invalide ou expiré");
+          setIsValidating(false);
+          return;
+        }
+
+        // ✅ Session valide = tout est OK
+        setError("");
+        setIsValidating(false);
+      } catch {
+        if (isMounted) {
+          setError("Erreur lors de la validation du lien");
+          setIsValidating(false);
+        }
+      }
+    };
+
+    // Petit délai pour laisser Supabase traiter l'URL depuis les fragments
+    timeoutId = setTimeout(() => {
+      if (isMounted) {
+        handleAuthCallback();
+      }
+    }, 500);
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +88,22 @@ const ResetPassword = () => {
       setLoading(false);
     }
   };
+
+  // Afficher un loading pendant la validation
+  if (isValidating) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg border border-secondary-200">
+          <div className="text-center">
+            <h2 className="mt-6 text-center text-3xl font-bold text-accent-900">
+              Validation du lien...
+            </h2>
+            <div className="mt-4 animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">

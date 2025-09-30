@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { normalizeText } from "./textUtils";
+import { logSupabaseError } from "./logger";
 
 
 export interface FolderItem {
@@ -54,20 +55,16 @@ export const checkFolderExists = async (
       .select("id")
       .eq("user_id", user.id)
       .eq("folder_name", normalizedName)
-      .single();
+      .limit(1);
 
     if (error) {
-      if (error.code === "PGRST116") {
-        // Aucun résultat trouvé, le dossier n'existe pas
-        return { exists: false };
-      }
-      console.error("Erreur vérification dossier:", error);
+      logSupabaseError("vérification dossier", error);
       return { exists: false, error: error.message };
     }
 
-    return { exists: !!data };
+    return { exists: data && data.length > 0 };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
     return { exists: false, error: "Erreur inattendue" };
   }
 };
@@ -129,13 +126,13 @@ export const createFolder = async (
       .single();
 
     if (error) {
-      console.error("Erreur création dossier:", error);
+      logSupabaseError("création dossier", error);
       return { success: false, error: error.message };
     }
 
     return { success: true, folder: data };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -160,13 +157,13 @@ export const loadUserFolders = async (): Promise<LoadFoldersResult> => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Erreur chargement dossiers:", error);
+      logSupabaseError("chargement dossiers", error);
       return { success: false, error: error.message, folders: [] };
     }
 
     return { success: true, folders: data || [] };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
     return { success: false, error: "Erreur inattendue", folders: [] };
   }
 };
@@ -196,13 +193,13 @@ export const deleteFolder = async (
       .eq("folder_name", normalizedName);
 
     if (error) {
-      console.error("Erreur suppression dossier:", error);
+      logSupabaseError("suppression dossier", error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
     return { success: false, error: "Erreur inattendue" };
   }
 };

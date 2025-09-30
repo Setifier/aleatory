@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { LotteryItem } from "../hooks/useLottery";
+import { logger, logSupabaseError } from "./logger";
 
 export interface LotteryHistoryEntry {
   id?: string;
@@ -71,7 +72,7 @@ export class LotteryHistoryService {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        console.warn("Utilisateur non connecté, impossible de sauvegarder l'historique");
+        logger.warn("Impossible de sauvegarder l'historique", "utilisateur non connecté");
         return null;
       }
 
@@ -92,13 +93,13 @@ export class LotteryHistoryService {
         .single();
 
       if (error) {
-        console.error("Erreur lors de la sauvegarde du tirage:", error);
+        logSupabaseError("sauvegarde du tirage", error);
         return null;
       }
 
       return transformFromDatabase(data);
     } catch (error) {
-      console.error("Erreur inattendue lors de la sauvegarde:", error);
+      logSupabaseError("erreur inattendue sauvegarde", error);
       return null;
     }
   }
@@ -111,7 +112,7 @@ export class LotteryHistoryService {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        console.warn("Utilisateur non connecté, aucun historique en base");
+        logger.warn("Aucun historique en base", "utilisateur non connecté");
         return [];
       }
 
@@ -123,13 +124,13 @@ export class LotteryHistoryService {
         .limit(50);
 
       if (error) {
-        console.error("Erreur lors de la récupération de l'historique:", error);
+        logSupabaseError("récupération de l'historique", error);
         return [];
       }
 
       return (data || []).map(transformFromDatabase);
     } catch (error) {
-      console.error("Erreur inattendue lors de la récupération:", error);
+      logSupabaseError("erreur inattendue récupération", error);
       return [];
     }
   }
@@ -142,7 +143,7 @@ export class LotteryHistoryService {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        console.warn("Utilisateur non connecté, impossible de supprimer");
+        logger.warn("Impossible de supprimer", "utilisateur non connecté");
         return false;
       }
 
@@ -153,13 +154,13 @@ export class LotteryHistoryService {
         .eq("user_id", user.id); // Sécurité supplémentaire
 
       if (error) {
-        console.error("Erreur lors de la suppression:", error);
+        logSupabaseError("suppression entrée historique", error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error("Erreur inattendue lors de la suppression:", error);
+      logSupabaseError("erreur inattendue suppression", error);
       return false;
     }
   }
@@ -172,7 +173,7 @@ export class LotteryHistoryService {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        console.warn("Utilisateur non connecté, impossible de vider l'historique");
+        logger.warn("Impossible de vider l'historique", "utilisateur non connecté");
         return false;
       }
 
@@ -182,13 +183,13 @@ export class LotteryHistoryService {
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("Erreur lors du vidage de l'historique:", error);
+        logSupabaseError("vidage de l'historique", error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error("Erreur inattendue lors du vidage:", error);
+      logSupabaseError("erreur inattendue vidage", error);
       return false;
     }
   }
