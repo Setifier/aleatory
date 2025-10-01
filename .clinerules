@@ -1,0 +1,39 @@
+# Instructions pour Claude Code
+
+## Communication
+- Explique systématiquement ce que tu fais et pourquoi
+- Pour chaque correction :
+  * Problème identifié
+  * Solution appliquée
+  * Impact sur la logique métier
+  * Comment tester
+
+## Bonnes pratiques React/TypeScript
+- useRef pour les timers (setTimeout/setInterval) avec cleanup obligatoire
+- Jamais de // eslint-disable sans justification solide
+- Préfère la simplicité à l'over-engineering
+- useCallback/useMemo seulement si mesure de performance le justifie
+
+## Process de correction
+- Montre TOUTES les modifications avant validation
+- Explique chaque import ajouté/retiré
+- Ne propose JAMAIS de corrections partielles
+- Si tu hésites entre 2 solutions, propose les deux
+
+## Tests
+- Propose comment tester manuellement après chaque changement
+- Identifie les scénarios qui pourraient casser
+- Liste les edge cases à vérifier
+
+## Interdictions strictes
+- ❌ Désactiver ESLint sans raison critique
+- ❌ Multiplier les variables inutilement
+- ❌ Over-complexifier des solutions simples
+- ❌ Ignorer les warnings sans les comprendre
+
+## Format de réponse
+1. 📋 Problème
+2. 🔧 Solution
+3. 💡 Justification
+4. 🧪 Tests suggérés
+5. ⚠️ Risques potentiels

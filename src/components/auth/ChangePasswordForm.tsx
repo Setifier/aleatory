@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { UserAuth, getErrorMessage } from "../../context/AuthContext";
 import MfaVerificationModal from "./MfaVerificationModal";
 
@@ -28,8 +28,17 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const timeoutRef = useRef<number | null>(null);
 
   const auth = UserAuth();
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +99,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
         setNewPassword("");
         setConfirmPassword("");
         setPendingPasswordData(null);
-        setTimeout(() => {
+        timeoutRef.current = window.setTimeout(() => {
           onCancel();
         }, 2000);
       } else {

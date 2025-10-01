@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import Button from "../components/ui/Button";
@@ -9,6 +9,15 @@ const ForgotPassword = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const timeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +39,7 @@ const ForgotPassword = () => {
         setEmail("");
 
         // Rediriger vers la page de connexion après 3 secondes
-        setTimeout(() => {
+        timeoutRef.current = window.setTimeout(() => {
           navigate("/signin", {
             state: {
               message: "Email de récupération envoyé. Vérifiez votre boîte mail."
