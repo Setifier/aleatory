@@ -65,13 +65,13 @@ const Navbar = () => {
           {/* Navigation Links */}
           <div className="flex items-center space-x-4">
             {auth?.session ? (
-              // Menu déroulant "Mon Profil" quand connecté
+              // Menu déroulant avec le nom de l'utilisateur quand connecté
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleDropdown}
                   className="text-accent-700 hover:text-primary-600 px-3 py-2 rounded-md text-xl font-medium transition-colors flex items-center"
                 >
-                  Mon Profil
+                  {auth?.session?.user?.user_metadata?.pseudo || auth?.session?.user?.email?.split('@')[0] || "Mon Profil"}
                   <svg
                     className={`ml-1 h-4 w-4 transition-transform ${
                       isDropdownOpen ? "rotate-180" : ""

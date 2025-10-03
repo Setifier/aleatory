@@ -184,18 +184,7 @@ const Home = () => {
           </div>
 
           {/* Indicateur de connexion moderne */}
-          {auth?.session ? (
-            <div className="bg-gradient-to-r from-green-50 to-primary-50 border-2 border-green-300 text-green-800 px-6 py-3 rounded-xl inline-block shadow-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="font-semibold">
-                  Connecté :{" "}
-                  {auth.session.user?.user_metadata?.pseudo ||
-                    auth.session.user?.email}
-                </span>
-              </div>
-            </div>
-          ) : (
+          {!auth?.session && (
             <div className="bg-gradient-to-r from-secondary-100 to-accent-100 border-2 border-accent-300 px-6 py-3 rounded-xl inline-block shadow-lg">
               <div className="flex items-center gap-3">
                 <div>

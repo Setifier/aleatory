@@ -6,7 +6,7 @@ import ElementsListModal from "./ElementsListModal";
 
 interface LotteryHistoryProps {
   history: LotteryResult[];
-  onClear?: () => void; // Seulement disponible pour les utilisateurs non connectés
+  onClear?: () => void; // Vider tout l'historique (disponible pour tous)
   onDeleteEntry?: (entryId: string) => void; // Pour supprimer une entrée spécifique (utilisateurs connectés)
   isAuthenticated?: boolean;
 }
@@ -38,7 +38,7 @@ const LotteryHistory = ({ history, onClear, onDeleteEntry, isAuthenticated = fal
       </div>
 
       {/* Message pour utilisateurs non connectés */}
-      {onClear && (
+      {!isAuthenticated && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
           <div className="flex items-start gap-2">
             <div className="text-yellow-500 text-sm">⚠️</div>
@@ -148,7 +148,7 @@ const LotteryHistory = ({ history, onClear, onDeleteEntry, isAuthenticated = fal
           <div className="text-center text-sm text-accent-600">
             📈 {history.length} tirage{history.length > 1 ? "s" : ""} effectué
             {history.length > 1 ? "s" : ""}
-            {onClear && " • Données temporaires (mode invité)"}
+            {!isAuthenticated && " • Données temporaires (mode invité)"}
           </div>
         </div>
       )}

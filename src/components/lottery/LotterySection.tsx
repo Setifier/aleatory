@@ -188,7 +188,7 @@ const LotterySection = ({
       {history.length > 0 && (
         <LotteryHistory
           history={history}
-          onClear={!isAuthenticated ? clearHistory : undefined}
+          onClear={clearHistory}
           onDeleteEntry={isAuthenticated ? deleteHistoryEntry : undefined}
           isAuthenticated={isAuthenticated}
         />
