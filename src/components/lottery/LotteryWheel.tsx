@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { LotteryItem, LotteryResult } from "../../hooks/useLottery";
-import { useAnimatedLottery } from "../../hooks/useAnimatedLottery";
 import ElementsListModal from "./ElementsListModal";
 import { generateDefaultTitle } from "../../lib/lotteryHistoryService";
 
@@ -19,18 +18,19 @@ const LotteryWheel = ({
   isVisible,
   onClose,
 }: LotteryWheelProps) => {
-  // Utiliser le custom hook pour gérer l'animation avec cleanup
-  const { spinningItem, showFinalResult, animationPhase } = useAnimatedLottery({
-    isDrawing,
-    items,
-    result,
-  });
-
+  const [spinningItem, setSpinningItem] = useState<string>("");
+  const [showFinalResult, setShowFinalResult] = useState(false);
+  const [animationPhase, setAnimationPhase] = useState<
+    "spinning" | "slowing" | "stopped"
+  >("stopped");
   const [showElementsList, setShowElementsList] = useState(false);
 
-  // Reset quand modal se ferme
+  // Reset des états quand le modal se ferme
   useEffect(() => {
     if (!isVisible) {
+      setShowFinalResult(false);
+      setAnimationPhase("stopped");
+      setSpinningItem("");
       setShowElementsList(false);
     }
   }, [isVisible]);
@@ -38,15 +38,71 @@ const LotteryWheel = ({
   // Gérer le scroll de la page en arrière-plan
   useEffect(() => {
     if (isVisible) {
+      // Désactiver le scroll
       document.body.style.overflow = 'hidden';
     } else {
+      // Réactiver le scroll
       document.body.style.overflow = 'unset';
     }
 
+    // Cleanup au démontage du composant
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isVisible]);
+
+  useEffect(() => {
+    if (isDrawing && items.length > 0) {
+      setShowFinalResult(false);
+      setAnimationPhase("spinning");
+
+      // Phase 1: Spinning rapide (2 secondes)
+      let currentIndex = 0;
+      const fastSpinInterval = setInterval(() => {
+        setSpinningItem(items[currentIndex % items.length].name);
+        currentIndex++;
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(fastSpinInterval);
+        setAnimationPhase("slowing");
+
+        // Phase 2: Ralentissement (1.5 secondes)
+        let slowIndex = currentIndex;
+        const slowSpinInterval = setInterval(() => {
+          setSpinningItem(items[slowIndex % items.length].name);
+          slowIndex++;
+        }, 200);
+
+        setTimeout(() => {
+          clearInterval(slowSpinInterval);
+          setAnimationPhase("stopped");
+
+          // Phase 3: Résultat final
+          setTimeout(() => {
+            if (result) {
+              setSpinningItem(result.winner.name);
+              setTimeout(() => {
+                setShowFinalResult(true);
+              }, 200);
+            }
+          }, 300);
+        }, 1500);
+      }, 2000);
+    }
+  }, [isDrawing, items, result]);
+
+  // Fallback pour s'assurer que le bouton s'affiche toujours
+  useEffect(() => {
+    if (result && animationPhase === "stopped" && !showFinalResult) {
+      const fallbackTimer = setTimeout(() => {
+        setSpinningItem(result.winner.name);
+        setShowFinalResult(true);
+      }, 1000);
+
+      return () => clearTimeout(fallbackTimer);
+    }
+  }, [result, animationPhase, showFinalResult]);
 
   if (!isVisible) return null;
 

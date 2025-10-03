@@ -3,6 +3,7 @@ import Button from "../components/ui/Button";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth, getErrorMessage } from "../context/AuthContext";
 import { formatAndValidatePseudo } from "../lib/pseudoUtils";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,8 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showAccountExistsModal, setShowAccountExistsModal] = useState(false);
+  const [showEmailConfirmDialog, setShowEmailConfirmDialog] = useState(false);
+  const [confirmationEmail, setConfirmationEmail] = useState("");
 
   const auth = UserAuth();
   const navigate = useNavigate();
@@ -54,10 +57,8 @@ const Signup = () => {
         if (result.needsEmailConfirmation) {
           // Email de confirmation nécessaire
           setError(""); // Pas d'erreur, juste un message informatif
-          alert(
-            `📧 Un email de confirmation a été envoyé à ${email}.\n\nVeuillez cliquer sur le lien dans l'email pour activer votre compte, puis vous connecter.`
-          );
-          navigate("/signin"); // Redirection vers la page de connexion
+          setConfirmationEmail(email);
+          setShowEmailConfirmDialog(true);
         } else {
           // Inscription directe (si confirmation désactivée)
           navigate("/");
@@ -213,6 +214,25 @@ const Signup = () => {
             </Link>
           </p>
         </div>
+
+        {/* Dialog Email de confirmation */}
+        <ConfirmDialog
+          isOpen={showEmailConfirmDialog}
+          title="Email de confirmation envoyé"
+          message={`Un email de confirmation a été envoyé à ${confirmationEmail}.\n\nVeuillez cliquer sur le lien dans l'email pour activer votre compte, puis vous connecter.`}
+          onConfirm={() => {
+            setShowEmailConfirmDialog(false);
+            setConfirmationEmail("");
+            navigate("/signin");
+          }}
+          onCancel={() => {
+            setShowEmailConfirmDialog(false);
+            setConfirmationEmail("");
+            navigate("/signin");
+          }}
+          confirmText="Compris"
+          cancelText="Fermer"
+        />
 
         {/* Modale compte existant */}
         {showAccountExistsModal && (

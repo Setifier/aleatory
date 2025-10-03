@@ -16,6 +16,7 @@ import ErrorMessage from "../ui/ErrorMessage";
 import Toggle from "../ui/Toggle";
 import DisableMfaModal from "./DisableMfaModal";
 import MfaFactorSelectionModal from "./MfaFactorSelectionModal";
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 const MfaManager = () => {
   const [factors, setFactors] = useState<MfaFactor[]>([]);
@@ -37,6 +38,10 @@ const MfaManager = () => {
   
   // État pour la vérification MFA avant désactivation
   const [showMfaVerification, setShowMfaVerification] = useState(false);
+
+  // États pour le dialog de confirmation de suppression
+  const [showRemoveFactorDialog, setShowRemoveFactorDialog] = useState(false);
+  const [pendingFactorIdToRemove, setPendingFactorIdToRemove] = useState<string>("");
 
   // Charger les facteurs MFA existants
   const loadMfaFactors = async () => {
@@ -151,22 +156,33 @@ const MfaManager = () => {
     setVerifyLoading(false);
   };
 
-  // Supprimer un facteur MFA
-  const handleRemoveFactor = async (factorId: string) => {
-    if (
-      !confirm(
-        "Êtes-vous sûr de vouloir supprimer ce facteur d'authentification ?"
-      )
-    ) {
-      return;
-    }
+  // Demander confirmation avant suppression d'un facteur MFA
+  const handleRemoveFactor = (factorId: string) => {
+    setPendingFactorIdToRemove(factorId);
+    setShowRemoveFactorDialog(true);
+  };
 
-    const result = await unenrollMfaFactor(factorId);
+  // Confirmer et exécuter la suppression du facteur
+  const confirmRemoveFactor = async () => {
+    if (!pendingFactorIdToRemove) return;
+
+    setShowRemoveFactorDialog(false);
+
+    const result = await unenrollMfaFactor(pendingFactorIdToRemove);
     if (result.success) {
       await loadMfaFactors(); // Recharger la liste
     } else {
       setError(result.error || "Erreur lors de la suppression");
     }
+
+    // Cleanup
+    setPendingFactorIdToRemove("");
+  };
+
+  // Annuler la suppression
+  const cancelRemoveFactor = () => {
+    setShowRemoveFactorDialog(false);
+    setPendingFactorIdToRemove("");
   };
 
   const closeModal = async () => {
@@ -403,11 +419,22 @@ const MfaManager = () => {
       />
 
       {/* Modal de désactivation MFA */}
-      <DisableMfaModal 
+      <DisableMfaModal
         isOpen={showDisableModal}
         onClose={() => setShowDisableModal(false)}
         onConfirm={confirmDisableMfa}
         isLoading={disableLoading}
+      />
+
+      {/* Dialog de confirmation de suppression d'un facteur */}
+      <ConfirmDialog
+        isOpen={showRemoveFactorDialog}
+        title="Supprimer ce facteur"
+        message="Êtes-vous sûr de vouloir supprimer ce facteur d'authentification ? Cette action est irréversible."
+        onConfirm={confirmRemoveFactor}
+        onCancel={cancelRemoveFactor}
+        confirmText="Supprimer"
+        cancelText="Annuler"
       />
     </div>
   );

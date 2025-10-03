@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'sans': ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        'nunito': ['Nunito', 'sans-serif'],
+        sans: ["Nunito", "ui-sans-serif", "system-ui", "sans-serif"],
+        nunito: ["Nunito", "sans-serif"],
       },
       colors: {
         primary: {
@@ -49,8 +49,9 @@ export default {
         "modal-pulse": "modalPulse 2s ease-in-out infinite",
         "spin-slow": "spin 3s linear infinite",
         "bounce-slow": "bounce 2s infinite",
-        "glow": "glow 2s ease-in-out infinite alternate",
-        "float": "float 3s ease-in-out infinite",
+        glow: "glow 2s ease-in-out infinite alternate",
+        float: "float 3s ease-in-out infinite",
+        "winner-pulse": "winnerPulse 1.5s ease-in-out infinite",
       },
       keyframes: {
         modalPulse: {
@@ -77,6 +78,17 @@ export default {
           },
           "50%": {
             transform: "translateY(-10px)",
+          },
+        },
+        winnerPulse: {
+          // ← Ajoute ça
+          "0%, 100%": {
+            transform: "scale(1)",
+            boxShadow: "0 0 0 0 rgba(34, 197, 94, 0.7)",
+          },
+          "50%": {
+            transform: "scale(1.08)",
+            boxShadow: "0 0 0 15px rgba(34, 197, 94, 0)",
           },
         },
       },
