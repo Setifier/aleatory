@@ -3,11 +3,14 @@ import {
   useEffect,
   useState,
   useContext,
+  useCallback,
 } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 import { isMfaEnabledInPreferences } from "../lib/mfaPreferences";
 import { getAccountDeletionStatus } from "../lib/accountService";
+
+import * as Sentry from "@sentry/react";
 
 interface SessionWithAal extends Session {
   aal?: "aal1" | "aal2";
@@ -22,7 +25,7 @@ type SupabaseError = {
 
 // Helper pour extraire le message d'une erreur
 export const getErrorMessage = (error: string | SupabaseError): string => {
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     return error;
   }
   return error.message;
@@ -100,7 +103,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (error) {
       console.error("Erreur lors de la création de l'utilisateur:", error);
 
-      // Vérifier si c'est une erreur "User already registered"
+      // Capture Sentry
+      Sentry.captureException(error, {
+        tags: {
+          action: "signup",
+          error_type: error.code || "unknown",
+        },
+        extra: {
+          email, // OK car c'est l'email de l'utilisateur qui s'inscrit
+          isAlreadyRegistered: error.message?.includes(
+            "User already registered"
+          ),
+        },
+      });
+
       if (error.message && error.message.includes("User already registered")) {
         return {
           success: false,
@@ -132,7 +148,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error("Erreur lors de la connexion:", error);
-        return { success: false, error: error.message || "Erreur de connexion" };
+
+        Sentry.captureException(error, {
+          tags: {
+            action: "signin",
+            error_type: error.code || "unknown",
+          },
+          extra: { email },
+        });
+
+        return {
+          success: false,
+          error: error.message || "Erreur de connexion",
+        };
       }
 
       // Vérifier d'abord si l'utilisateur a des facteurs MFA
@@ -204,6 +232,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: true, data };
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
+
+      Sentry.captureException(error, {
+        tags: {
+          action: "signin",
+          error_type: "unexpected",
+        },
+        extra: { email },
+      });
+
       return { success: false, error: "Erreur de connexion" };
     }
   };
@@ -223,7 +260,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error("Erreur vérification MFA:", error);
-        return { success: false, error: error.message || "Erreur de vérification MFA" };
+
+        Sentry.captureException(error, {
+          tags: {
+            action: "mfa_verify",
+            error_type: error.code || "unknown",
+          },
+        });
+
+        return {
+          success: false,
+          error: error.message || "Erreur de vérification MFA",
+        };
       }
 
       // Réinitialiser le challenge MFA et l'état
@@ -233,6 +281,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: true, data };
     } catch (error) {
       console.error("Erreur lors de la vérification MFA:", error);
+
+      Sentry.captureException(error, {
+        tags: {
+          action: "mfa_verify",
+          error_type: "unexpected",
+        },
+      });
+
       return { success: false, error: "Erreur de vérification MFA" };
     }
   };
@@ -259,11 +315,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Erreur lors de la déconnexion:", error);
-        return { success: false, error: error.message || "Erreur de déconnexion" };
+
+        Sentry.captureException(error, {
+          tags: { action: "signout" },
+        });
+
+        return {
+          success: false,
+          error: error.message || "Erreur de déconnexion",
+        };
       }
       return { success: true };
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
+
+      Sentry.captureException(error, {
+        tags: { action: "signout", error_type: "unexpected" },
+      });
+
       return { success: false, error: "Erreur de déconnexion" };
     }
   };
@@ -312,6 +381,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           updateError
         );
 
+        Sentry.captureException(updateError, {
+          tags: {
+            action: "update_password",
+            requires_reauth: (session as SessionWithAal).aal !== "aal2",
+          },
+        });
+
         // Si erreur liée à la vérification du mot de passe actuel
         if (updateError.message?.includes("invalid")) {
           return { success: false, error: "Mot de passe actuel incorrect" };
@@ -326,12 +402,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: true };
     } catch (error) {
       console.error("Erreur lors de la mise à jour du mot de passe:", error);
+
+      Sentry.captureException(error, {
+        tags: { action: "update_password", error_type: "unexpected" },
+      });
+
       return { success: false, error: "Une erreur est survenue" };
     }
   };
 
   // Rafraîchir le statut de suppression de compte
-  const refreshDeletionStatus = async () => {
+  const refreshDeletionStatus = useCallback(async () => {
     if (session) {
       const status = await getAccountDeletionStatus();
       setIsAccountScheduledForDeletion(status.isScheduledForDeletion);
@@ -343,12 +424,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setAccountDeletionDate(undefined);
       setAccountDeletionDaysRemaining(undefined);
     }
-  };
+  }, [session]);
 
   // Rafraîchir le statut de suppression lors du changement de session
   useEffect(() => {
     refreshDeletionStatus();
-  }, [session]);
+  }, [refreshDeletionStatus]);
 
   return (
     <AuthContext.Provider

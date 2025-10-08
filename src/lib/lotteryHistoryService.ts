@@ -1,6 +1,7 @@
 import { supabase } from "./supabaseClient";
 import { LotteryItem } from "../hooks/useLottery";
 import { logger, logSupabaseError } from "./logger";
+import * as Sentry from "@sentry/react";
 
 export interface LotteryHistoryEntry {
   id?: string;
@@ -100,6 +101,19 @@ export class LotteryHistoryService {
       return transformFromDatabase(data);
     } catch (error) {
       logSupabaseError("erreur inattendue sauvegarde", error);
+
+      Sentry.captureException(error, {
+        tags: {
+          service: 'lotteryHistory',
+          action: 'save'
+        },
+        extra: {
+          winnerName: winner.name,
+          elementsCount: elements.length,
+          title
+        }
+      });
+
       return null;
     }
   }
@@ -131,6 +145,14 @@ export class LotteryHistoryService {
       return (data || []).map(transformFromDatabase);
     } catch (error) {
       logSupabaseError("erreur inattendue récupération", error);
+
+      Sentry.captureException(error, {
+        tags: {
+          service: 'lotteryHistory',
+          action: 'get'
+        }
+      });
+
       return [];
     }
   }
@@ -161,6 +183,15 @@ export class LotteryHistoryService {
       return true;
     } catch (error) {
       logSupabaseError("erreur inattendue suppression", error);
+
+      Sentry.captureException(error, {
+        tags: {
+          service: 'lotteryHistory',
+          action: 'delete'
+        },
+        extra: { entryId }
+      });
+
       return false;
     }
   }
@@ -190,6 +221,14 @@ export class LotteryHistoryService {
       return true;
     } catch (error) {
       logSupabaseError("erreur inattendue vidage", error);
+
+      Sentry.captureException(error, {
+        tags: {
+          service: 'lotteryHistory',
+          action: 'clear'
+        }
+      });
+
       return false;
     }
   }

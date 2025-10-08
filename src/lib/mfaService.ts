@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import * as Sentry from "@sentry/react";
 
 export interface MfaFactor {
   id: string;
@@ -46,7 +47,13 @@ export const getUserMfaFactors = async (): Promise<{
       }))
     };
   } catch (error) {
-    // Error logged for debugging
+    Sentry.captureException(error, {
+      tags: {
+        service: 'mfa',
+        action: 'listFactors'
+      }
+    });
+
     return { factors: [], error: "Erreur inattendue" };
   }
 };
@@ -79,7 +86,14 @@ export const enrollTotp = async (friendlyName?: string): Promise<EnrollTotpResul
       secret: data.totp?.secret
     };
   } catch (error) {
-    // Error logged for debugging
+    Sentry.captureException(error, {
+      tags: {
+        service: 'mfa',
+        action: 'enroll'
+      },
+      extra: { friendlyName }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -104,7 +118,14 @@ export const verifyTotpEnrollment = async (
 
     return { success: true };
   } catch (error) {
-    // Error logged for debugging
+    Sentry.captureException(error, {
+      tags: {
+        service: 'mfa',
+        action: 'verifyEnrollment'
+      },
+      extra: { factorId }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -126,7 +147,14 @@ export const unenrollMfaFactor = async (factorId: string): Promise<{
 
     return { success: true };
   } catch (error) {
-    // Error logged for debugging
+    Sentry.captureException(error, {
+      tags: {
+        service: 'mfa',
+        action: 'unenroll'
+      },
+      extra: { factorId }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -149,7 +177,14 @@ export const createMfaChallenge = async (factorId: string): Promise<{
 
     return { success: true, challengeId: data.id };
   } catch (error) {
-    // Error logged for debugging
+    Sentry.captureException(error, {
+      tags: {
+        service: 'mfa',
+        action: 'createChallenge'
+      },
+      extra: { factorId }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -176,7 +211,14 @@ export const verifyMfaCode = async (
 
     return { success: true };
   } catch (error) {
-    // Error logged for debugging
+    Sentry.captureException(error, {
+      tags: {
+        service: 'mfa',
+        action: 'verifyCode'
+      },
+      extra: { factorId, challengeId }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };

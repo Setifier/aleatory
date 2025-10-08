@@ -1,6 +1,7 @@
 import { supabase } from "./supabaseClient";
 import { normalizeText } from "./textUtils";
 import { logSupabaseError } from "./logger";
+import * as Sentry from "@sentry/react";
 
 // Type pour la relation item_folders depuis Supabase
 export type ItemFolderRelation = {
@@ -58,6 +59,15 @@ export const checkItemExists = async (
     return { exists: data && data.length > 0 };
   } catch (error) {
     logSupabaseError("erreur inattendue", error);
+
+    Sentry.captureException(error, {
+      tags: {
+        service: 'savedItems',
+        action: 'checkExists'
+      },
+      extra: { itemName }
+    });
+
     return { exists: false, error: "Erreur inattendue" };
   }
 };
@@ -106,6 +116,15 @@ export const saveItem = async (
     return { success: true };
   } catch (error) {
     logSupabaseError("erreur inattendue", error);
+
+    Sentry.captureException(error, {
+      tags: {
+        service: 'savedItems',
+        action: 'save'
+      },
+      extra: { itemName }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -150,6 +169,14 @@ export const loadUserItems = async (): Promise<{
     return { items: itemsWithFolders };
   } catch (error) {
     logSupabaseError("erreur inattendue", error);
+
+    Sentry.captureException(error, {
+      tags: {
+        service: 'savedItems',
+        action: 'load'
+      }
+    });
+
     return { items: [], error: "Erreur inattendue" };
   }
 };
@@ -184,6 +211,15 @@ export const deleteItem = async (
     return { success: true };
   } catch (error) {
     logSupabaseError("erreur inattendue", error);
+
+    Sentry.captureException(error, {
+      tags: {
+        service: 'savedItems',
+        action: 'delete'
+      },
+      extra: { itemName }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -239,6 +275,15 @@ export const toggleItemFolder = async (
     }
   } catch (error) {
     logSupabaseError("erreur inattendue", error);
+
+    Sentry.captureException(error, {
+      tags: {
+        service: 'savedItems',
+        action: 'toggleFolder'
+      },
+      extra: { itemId, folderId, shouldAssign }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };
@@ -283,6 +328,16 @@ export const getItemsByFolder = async (
 
       if (error) {
         console.error("Erreur récupération items sans dossier:", error);
+        logSupabaseError("récupération items sans dossier", error);
+
+        Sentry.captureException(error, {
+          tags: {
+            service: 'savedItems',
+            action: 'getByFolder',
+            folderType: 'none'
+          }
+        });
+
         return { success: false, error: error.message };
       }
 
@@ -303,6 +358,16 @@ export const getItemsByFolder = async (
 
       if (error) {
         console.error("Erreur récupération items par dossier:", error);
+        logSupabaseError("récupération items par dossier", error);
+
+        Sentry.captureException(error, {
+          tags: {
+            service: 'savedItems',
+            action: 'getByFolder',
+            folderId
+          }
+        });
+
         return { success: false, error: error.message };
       }
 
@@ -310,6 +375,15 @@ export const getItemsByFolder = async (
     }
   } catch (error) {
     logSupabaseError("erreur inattendue", error);
+
+    Sentry.captureException(error, {
+      tags: {
+        service: 'savedItems',
+        action: 'getByFolder'
+      },
+      extra: { folderId }
+    });
+
     return { success: false, error: "Erreur inattendue" };
   }
 };
