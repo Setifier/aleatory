@@ -60,19 +60,16 @@ export const useLottery = (isAuthenticated: boolean = false) => {
     }
   }, [isAuthenticated]);
 
-  // Charger l'historique au montage si utilisateur connecté
   useEffect(() => {
     if (isAuthenticated) {
       loadHistory();
     }
   }, [isAuthenticated, loadHistory]);
 
-  // Ajouter un item au tirage
   const addItem = useCallback((name: string, isFromSaved = false) => {
     const trimmedName = name.trim();
     if (!trimmedName) return false;
 
-    // Utiliser la forme fonctionnelle de setState pour éviter la dépendance à items
     let isDuplicate = false;
     let errorMessage = "";
 
@@ -85,7 +82,7 @@ export const useLottery = (isAuthenticated: boolean = false) => {
       ) {
         isDuplicate = true;
         errorMessage = `"${trimmedName}" est déjà dans la liste`;
-        return prev; // Ne rien changer
+        return prev;
       }
 
       const newItem: LotteryItem = {
@@ -104,14 +101,12 @@ export const useLottery = (isAuthenticated: boolean = false) => {
 
     setError(null);
     return true;
-  }, []); // ✅ Plus de dépendances - fonction stable
+  }, []);
 
-  // Supprimer un item
   const removeItem = useCallback((itemId: string) => {
     setItems((prev) => prev.filter((item) => item.id !== itemId));
   }, []);
 
-  // Effectuer le tirage avec titre optionnel
   const drawLottery = useCallback(
     async (title?: string) => {
       if (items.length < 2 || isDrawing) {
@@ -124,30 +119,23 @@ export const useLottery = (isAuthenticated: boolean = false) => {
       setIsDrawing(true);
       setError(null);
 
-      // Calculer immédiatement le résultat (avant l'animation)
       const randomIndex = Math.floor(Math.random() * items.length);
       const winner = items[randomIndex];
       const timestamp = new Date();
 
-      // Créer le résultat local
       const result: LotteryResult = {
         winner,
-        elements: [...items], // Copie de la liste complète
+        elements: [...items],
         timestamp,
         participantsCount: items.length,
         title: title?.trim() || undefined,
       };
 
       setCurrentResult(result);
-      console.log("🎲 Tirage terminé", { result, isDrawing });
 
-      // Attendre que l'animation se termine (3.8s)
-      // 2000ms spinning + 1500ms slowing + 300ms résultat = 3800ms
       await new Promise((resolve) => setTimeout(resolve, 3800));
 
-      // Sauvegarder et gérer l'historique selon le mode
       if (isAuthenticated) {
-        // Mode connecté : sauvegarder en base de données
         try {
           const savedEntry = await LotteryHistoryService.saveLotteryResult(
             winner,
@@ -156,26 +144,23 @@ export const useLottery = (isAuthenticated: boolean = false) => {
           );
 
           if (savedEntry) {
-            // Ajouter à l'historique avec l'ID de la base
             const savedResult: LotteryResult = {
               ...result,
               id: savedEntry.id,
-              title: savedEntry.title, // Utiliser le titre généré/finalisé par le service
+              title: savedEntry.title,
             };
 
             setCurrentResult(savedResult);
-            setHistory((prev) => [savedResult, ...prev.slice(0, 49)]); // Limiter à 50
+            setHistory((prev) => [savedResult, ...prev.slice(0, 49)]);
           } else {
-            // Si échec sauvegarde, garder quand même en local temporairement
             setHistory((prev) => [result, ...prev.slice(0, 9)]);
           }
         } catch (error) {
           logSupabaseError("sauvegarde du tirage", error);
-          // Fallback : ajouter en local
+
           setHistory((prev) => [result, ...prev.slice(0, 9)]);
         }
       } else {
-        // Mode invité : historique local seulement (limité à 10)
         setHistory((prev) => [result, ...prev.slice(0, 9)]);
       }
 
@@ -185,24 +170,19 @@ export const useLottery = (isAuthenticated: boolean = false) => {
     [items, isDrawing, isAuthenticated]
   );
 
-  // Vider la liste
   const clearItems = useCallback(() => {
     setItems([]);
     setError(null);
   }, []);
 
-  // Clear l'erreur
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  // Vider l'historique (local pour invités, base pour connectés)
   const clearHistory = useCallback(async () => {
-    // Lire isAuthenticated directement au moment de l'appel
     const authenticated = isAuthenticated;
 
     if (authenticated) {
-      // Mode connecté : vider en base de données
       const success = await LotteryHistoryService.clearLotteryHistory();
       if (success) {
         setHistory([]);
@@ -210,14 +190,12 @@ export const useLottery = (isAuthenticated: boolean = false) => {
       }
       return success;
     } else {
-      // Mode invité : vider l'historique local
       setHistory([]);
       setCurrentResult(null);
       return true;
     }
-  }, [isAuthenticated]); // Ajout de isAuthenticated comme dépendance
+  }, [isAuthenticated]);
 
-  // Supprimer une entrée spécifique (seulement pour les utilisateurs connectés)
   const deleteHistoryEntry = useCallback(
     async (entryId: string) => {
       if (!isAuthenticated) return false;
@@ -225,7 +203,7 @@ export const useLottery = (isAuthenticated: boolean = false) => {
       const success = await LotteryHistoryService.deleteLotteryEntry(entryId);
       if (success) {
         setHistory((prev) => prev.filter((entry) => entry.id !== entryId));
-        // Si c'était le résultat actuel, le nettoyer aussi
+
         if (currentResult?.id === entryId) {
           setCurrentResult(null);
         }

@@ -177,7 +177,7 @@ export const deleteItem = async (
       .eq("item_name", normalizedName);
 
     if (error) {
-      console.error("Erreur suppression:", error);
+      logSupabaseError("suppression item", error);
       return { success: false, error: error.message };
     }
 
@@ -195,16 +195,11 @@ export const toggleItemFolder = async (
   shouldAssign: boolean
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    console.log("📋 toggleItemFolder appelée avec:", { itemId, folderId, shouldAssign });
-
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      console.log("❌ Utilisateur non connecté");
       return { success: false, error: "Utilisateur non connecté" };
     }
-
-    console.log("👤 Utilisateur connecté:", user.id);
 
     if (shouldAssign) {
       // Ajouter la relation
@@ -219,14 +214,12 @@ export const toggleItemFolder = async (
       if (error) {
         // Si l'erreur est due à une contrainte unique, c'est OK
         if (error.code === '23505') {
-          console.log("✅ Relation déjà existante");
           return { success: true };
         }
-        console.error("❌ Erreur insertion relation:", error);
+        logSupabaseError("insertion relation item-dossier", error);
         return { success: false, error: error.message };
       }
 
-      console.log("✅ Relation ajoutée");
       return { success: true };
     } else {
       // Supprimer la relation
@@ -238,15 +231,14 @@ export const toggleItemFolder = async (
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("❌ Erreur suppression relation:", error);
+        logSupabaseError("suppression relation item-dossier", error);
         return { success: false, error: error.message };
       }
 
-      console.log("✅ Relation supprimée");
       return { success: true };
     }
   } catch (error) {
-    console.error("❌ Erreur inattendue:", error);
+    logSupabaseError("erreur inattendue", error);
     return { success: false, error: "Erreur inattendue" };
   }
 };

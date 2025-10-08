@@ -86,15 +86,12 @@ const FolderAssignmentMenu = ({
   };
 
   const handleFolderToggle = async (folderId: number, shouldAssign: boolean) => {
-    console.log("🔄 Toggle demandé:", { itemId, itemName, folderId, shouldAssign });
-
     // Ajouter ce dossier au loading
     setLoadingFolders(prev => new Set([...prev, folderId]));
     setError("");
     setSuccess("");
 
     const result = await toggleItemFolder(itemId, folderId, shouldAssign);
-    console.log("📋 Résultat toggle:", result);
 
     // Retirer ce dossier du loading
     setLoadingFolders(prev => {
@@ -104,7 +101,6 @@ const FolderAssignmentMenu = ({
     });
 
     if (result.success) {
-      console.log("✅ Toggle réussi!");
       const folderName = folders.find(f => f.id === folderId)?.folder_name;
       const action = shouldAssign ? "ajouté à" : "retiré de";
       setSuccess(`✅ ${action}: ${folderName}`);
@@ -115,7 +111,6 @@ const FolderAssignmentMenu = ({
         setSuccess("");
       }, 2000);
     } else {
-      console.error("❌ Erreur toggle:", result.error);
       setError(result.error || "Erreur lors de l'assignation");
     }
   };
