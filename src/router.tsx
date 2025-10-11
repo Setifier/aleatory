@@ -6,6 +6,8 @@ import Signin from "./pages/Signin";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Tournament from "./pages/Tournament";
+import Lottery from "./pages/Lottery";
 import AuthProtectedRoute from "./components/auth/AuthProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -40,6 +42,14 @@ export const router = createBrowserRouter([
       {
         path: "settings",
         element: <Settings />,
+      },
+      {
+        path: "lottery",
+        element: <Lottery />,
+      },
+      {
+        path: "tournament",
+        element: <Tournament />,
       },
     ],
   },

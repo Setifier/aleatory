@@ -11,6 +11,7 @@ interface FoldersManagerProps {
   onCreate: (folderName: string) => Promise<void>;
   onDelete: (folderName: string) => void;
   onAddToLottery: (itemName: string) => void;
+  onAddFolder: (folderId: number) => Promise<string[]>;
 }
 
 const FoldersManager = ({
@@ -19,6 +20,7 @@ const FoldersManager = ({
   onCreate,
   onDelete,
   onAddToLottery,
+  onAddFolder,
 }: FoldersManagerProps) => {
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -62,7 +64,7 @@ const FoldersManager = ({
     if (selectedFolder !== null) {
       loadFolderItems(selectedFolder);
     }
-  }, [folders]); // Recharger quand la liste des dossiers change
+  }, [folders, selectedFolder]); // Recharger quand la liste des dossiers change
 
   // Filtrer les dossiers selon la recherche
   const filteredFolders = folders.filter((folder) =>
@@ -333,6 +335,25 @@ const FoldersManager = ({
                                 </div>
                               </div>
                             ))
+                          )}
+                          {folderItems.length > 0 && onAddFolder && (
+                            <div className="flex flex-col">
+                              <hr className="my-4" />
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const itemNames = await onAddFolder(
+                                    folder.id
+                                  );
+                                  itemNames.forEach((name) =>
+                                    onAddToLottery(name)
+                                  );
+                                }}
+                                className="w-full mb-2 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm rounded transition-colors"
+                              >
+                                Tout ajouter
+                              </button>
+                            </div>
                           )}
                         </div>
                       )}
