@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
-import TournamentModeCard from "../components/tournament/TournamentModeCard";
+import SelectionCard from "../components/ui/SelectionCard";
 
 const Home = () => {
   const auth = UserAuth();
@@ -34,7 +34,10 @@ const Home = () => {
                   >
                     Connectez-vous
                   </Link>
-                  <span className="text-accent-600"> pour sauvegarder vos données</span>
+                  <span className="text-accent-600">
+                    {" "}
+                    pour sauvegarder vos données
+                  </span>
                 </div>
               </div>
             </div>
@@ -44,14 +47,14 @@ const Home = () => {
         {/* Mode Selection Cards */}
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <TournamentModeCard
+            <SelectionCard
               title="Lottery Machine"
               description="Tirage au sort rapide avec un seul gagnant"
               icon="🎰"
               onClick={() => navigate("/lottery")}
             />
 
-            <TournamentModeCard
+            <SelectionCard
               title="Tournament Mode"
               description="Créez des tournois à élimination directe ou par groupes"
               icon="🏆"

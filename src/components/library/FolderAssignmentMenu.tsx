@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { FolderItem, loadUserFolders, createFolder } from "../../lib/foldersService";
+import {
+  FolderItem,
+  loadUserFolders,
+  createFolder,
+} from "../../lib/foldersService";
 import { toggleItemFolder } from "../../lib/savedItemsService";
 
 interface FolderAssignmentMenuProps {
@@ -9,7 +13,6 @@ interface FolderAssignmentMenuProps {
   itemName: string;
   currentFolderIds?: number[]; // Array de dossiers au lieu d'un seul
   onAssignmentChange: () => void;
-  position: { x: number; y: number };
 }
 
 const FolderAssignmentMenu = ({
@@ -19,7 +22,6 @@ const FolderAssignmentMenu = ({
   itemName,
   currentFolderIds = [],
   onAssignmentChange,
-  position
 }: FolderAssignmentMenuProps) => {
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [newFolderName, setNewFolderName] = useState("");
@@ -45,8 +47,9 @@ const FolderAssignmentMenu = ({
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen, onClose]);
 
@@ -71,7 +74,7 @@ const FolderAssignmentMenu = ({
     const result = await createFolder(newFolderName.trim());
     if (result.success && result.folder) {
       // Ajouter le nouveau dossier à la liste
-      setFolders(prev => [result.folder!, ...prev]);
+      setFolders((prev) => [result.folder!, ...prev]);
 
       // Assigner automatiquement l'item au nouveau dossier
       await handleFolderToggle(result.folder.id, true);
@@ -85,23 +88,26 @@ const FolderAssignmentMenu = ({
     setLoading(false);
   };
 
-  const handleFolderToggle = async (folderId: number, shouldAssign: boolean) => {
+  const handleFolderToggle = async (
+    folderId: number,
+    shouldAssign: boolean
+  ) => {
     // Ajouter ce dossier au loading
-    setLoadingFolders(prev => new Set([...prev, folderId]));
+    setLoadingFolders((prev) => new Set([...prev, folderId]));
     setError("");
     setSuccess("");
 
     const result = await toggleItemFolder(itemId, folderId, shouldAssign);
 
     // Retirer ce dossier du loading
-    setLoadingFolders(prev => {
+    setLoadingFolders((prev) => {
       const newSet = new Set(prev);
       newSet.delete(folderId);
       return newSet;
     });
 
     if (result.success) {
-      const folderName = folders.find(f => f.id === folderId)?.folder_name;
+      const folderName = folders.find((f) => f.id === folderId)?.folder_name;
       const action = shouldAssign ? "ajouté à" : "retiré de";
       setSuccess(`✅ ${action}: ${folderName}`);
       onAssignmentChange(); // Notifier le parent pour rafraîchir
@@ -126,10 +132,6 @@ const FolderAssignmentMenu = ({
       <div
         ref={menuRef}
         className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-64"
-        style={{
-          left: Math.min(position.x, window.innerWidth - 280),
-          top: Math.min(position.y, window.innerHeight - 300),
-        }}
       >
         <div className="px-4 py-2 border-b border-gray-100">
           <div className="flex justify-between items-center">
@@ -139,7 +141,8 @@ const FolderAssignmentMenu = ({
               </p>
               {currentFolderIds.length > 0 && (
                 <p className="text-xs text-gray-500">
-                  Dans {currentFolderIds.length} dossier{currentFolderIds.length > 1 ? 's' : ''}
+                  Dans {currentFolderIds.length} dossier
+                  {currentFolderIds.length > 1 ? "s" : ""}
                 </p>
               )}
             </div>
@@ -186,9 +189,9 @@ const FolderAssignmentMenu = ({
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     handleCreateFolder();
-                  } else if (e.key === 'Escape') {
+                  } else if (e.key === "Escape") {
                     setShowCreateForm(false);
                     setNewFolderName("");
                   }

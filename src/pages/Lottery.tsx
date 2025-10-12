@@ -5,8 +5,7 @@ import { useSavedItems } from "../hooks/useSavedItems";
 import { useFolders } from "../hooks/useFolders";
 
 import LotterySection from "../components/lottery/LotterySection";
-import SavedItemsManager from "../components/saved/SavedItemsManager";
-import FoldersManager from "../components/folders/FoldersManager";
+import ItemsLibrary from "../components/library/ItemsLibrary";
 
 const Lottery = () => {
   const navigate = useNavigate();
@@ -76,29 +75,27 @@ const Lottery = () => {
             </svg>
             Back to Home
           </button>
-
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-accent-900 mb-2">
-              🎰 Lottery Machine
-            </h1>
-            <p className="text-accent-600">
-              Quick random draw with a single winner
-            </p>
-          </div>
         </div>
 
         {/* Layout principal */}
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* Sidebar gauche - Visible seulement si connecté */}
+          {/* ItemsLibrary - Visible seulement si connecté */}
           {auth?.session && (
-            <div className="lg:w-80 w-full space-y-4">
-              <FoldersManager
+            <div className="lg:w-96 w-full">
+              <ItemsLibrary
+                savedItems={savedItems}
+                loadingSavedItems={loadingSavedItems}
+                savingItems={savingItems}
+                lotteryItems={currentLotteryItems}
+                onSaveItem={handleSaveItem}
+                onDeleteItem={handleDeleteSavedItem}
+                onAddItemToLottery={handleAddToLottery}
                 folders={folders}
-                isLoading={loadingFolders}
-                onCreate={handleCreateFolder}
-                onDelete={handleDeleteFolder}
-                onAddToLottery={handleAddToLottery}
+                loadingFolders={loadingFolders}
+                onCreateFolder={handleCreateFolder}
+                onDeleteFolder={handleDeleteFolder}
                 onAddFolder={handleAddFolder}
+                onRefreshItems={handleFolderAssignmentChange}
               />
             </div>
           )}
@@ -113,21 +110,6 @@ const Lottery = () => {
               onLotteryItemsChange={setCurrentLotteryItems}
             />
           </div>
-
-          {/* Sidebar droite - Visible seulement si connecté */}
-          {auth?.session && (
-            <div className="lg:w-80 w-full">
-              <SavedItemsManager
-                savedItems={savedItems}
-                isLoading={loadingSavedItems}
-                onDeleteItem={handleDeleteSavedItem}
-                onAddToLottery={handleAddToLottery}
-                onSaveItem={handleSaveItem}
-                lotteryItems={currentLotteryItems}
-                onRefreshItems={handleFolderAssignmentChange}
-              />
-            </div>
-          )}
         </div>
       </div>
     </div>

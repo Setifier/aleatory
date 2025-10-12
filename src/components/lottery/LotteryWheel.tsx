@@ -218,7 +218,7 @@ const LotteryWheel = ({
           )}
 
           {/* Actions */}
-          {(showFinalResult || (animationPhase === "stopped" && result)) && (
+          {showFinalResult && (
             <div className="flex justify-center gap-4">
               <button
                 onClick={(e) => {

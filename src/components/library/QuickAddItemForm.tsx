@@ -40,9 +40,9 @@ const QuickAddItemForm = ({ onAddItem, onCancel }: QuickAddItemFormProps) => {
         disabled={isAdding}
         autoFocus
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && itemName.trim()) {
+          if (e.key === "Enter" && itemName.trim()) {
             handleAddItem();
-          } else if (e.key === 'Escape') {
+          } else if (e.key === "Escape") {
             onCancel();
           }
         }}
@@ -54,7 +54,7 @@ const QuickAddItemForm = ({ onAddItem, onCancel }: QuickAddItemFormProps) => {
           disabled={isAdding || !itemName.trim()}
           className="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isAdding ? "⏳ Ajout..." : "✅ Ajouter"}
+          {isAdding ? "⏳ Ajout..." : "Ajouter"}
         </button>
 
         <button

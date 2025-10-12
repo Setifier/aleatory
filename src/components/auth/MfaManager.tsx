@@ -16,7 +16,7 @@ import ErrorMessage from "../ui/ErrorMessage";
 import Toggle from "../ui/Toggle";
 import DisableMfaModal from "./DisableMfaModal";
 import MfaFactorSelectionModal from "./MfaFactorSelectionModal";
-import ConfirmDialog from "../ui/ConfirmDialog";
+import ConfirmModal from "../ui/ConfirmModal";
 
 const MfaManager = () => {
   const [factors, setFactors] = useState<MfaFactor[]>([]);
@@ -35,13 +35,14 @@ const MfaManager = () => {
   // États pour la modale de désactivation
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [disableLoading, setDisableLoading] = useState(false);
-  
+
   // État pour la vérification MFA avant désactivation
   const [showMfaVerification, setShowMfaVerification] = useState(false);
 
   // États pour le dialog de confirmation de suppression
   const [showRemoveFactorDialog, setShowRemoveFactorDialog] = useState(false);
-  const [pendingFactorIdToRemove, setPendingFactorIdToRemove] = useState<string>("");
+  const [pendingFactorIdToRemove, setPendingFactorIdToRemove] =
+    useState<string>("");
 
   // Charger les facteurs MFA existants
   const loadMfaFactors = async () => {
@@ -65,7 +66,7 @@ const MfaManager = () => {
   const toggleMfa = (enabled: boolean) => {
     if (!enabled && factors.length > 0) {
       // Si on désactive et qu'il y a des facteurs vérifiés, demander la vérification MFA
-      const verifiedFactors = factors.filter(f => f.status === "verified");
+      const verifiedFactors = factors.filter((f) => f.status === "verified");
       if (verifiedFactors.length > 0) {
         setShowMfaVerification(true);
       } else {
@@ -95,7 +96,10 @@ const MfaManager = () => {
       for (const factor of factors) {
         const result = await unenrollMfaFactor(factor.id);
         if (!result.success) {
-          throw new Error(result.error || `Erreur lors de la suppression du facteur ${factor.id}`);
+          throw new Error(
+            result.error ||
+              `Erreur lors de la suppression du facteur ${factor.id}`
+          );
         }
       }
 
@@ -401,7 +405,9 @@ const MfaManager = () => {
               />
               <Button
                 onClick={handleVerifyTotp}
-                label={verifyLoading ? "Vérification..." : "Vérifier et activer"}
+                label={
+                  verifyLoading ? "Vérification..." : "Vérifier et activer"
+                }
                 className="flex-1"
                 disabled={totpCode.length !== 6 || verifyLoading}
               />
@@ -427,14 +433,16 @@ const MfaManager = () => {
       />
 
       {/* Dialog de confirmation de suppression d'un facteur */}
-      <ConfirmDialog
+      <ConfirmModal
         isOpen={showRemoveFactorDialog}
         title="Supprimer ce facteur"
         message="Êtes-vous sûr de vouloir supprimer ce facteur d'authentification ? Cette action est irréversible."
         onConfirm={confirmRemoveFactor}
         onCancel={cancelRemoveFactor}
-        confirmText="Supprimer"
-        cancelText="Annuler"
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        isDestructive={true}
+        advancedA11y={true}
       />
     </div>
   );

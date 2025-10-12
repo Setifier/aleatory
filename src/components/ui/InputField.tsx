@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import ErrorMessage from "./ErrorMessage";
-import { normalizeText } from "../../lib/textUtils";
 
 interface InputFieldProps {
   onAddItem: (item: string) => void; // Fonction pour ajouter l'élément
@@ -10,7 +9,6 @@ interface InputFieldProps {
   buttonLabel?: string; // Texte du bouton personnalisé
   disabled?: boolean; // Désactiver le composant
 }
-
 
 const InputField = ({
   onAddItem,
@@ -34,8 +32,7 @@ const InputField = ({
   const handleAddClick = useCallback(() => {
     const trimmedValue = inputValue.trim();
     if (trimmedValue !== "") {
-      const normalizedItem = normalizeText(trimmedValue);
-      onAddItem(normalizedItem);
+      onAddItem(trimmedValue);
       setInputValue(""); // Réinitialiser l'input après ajout
     }
   }, [inputValue, onAddItem]);

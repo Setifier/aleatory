@@ -1,4 +1,5 @@
 import InputField from "../ui/InputField";
+import { normalizeText } from "../../lib/textUtils";
 
 interface AddElementFormProps {
   onAddItem: (itemName: string) => void;
@@ -6,7 +7,16 @@ interface AddElementFormProps {
   onDismissError: () => void;
 }
 
-const AddElementForm = ({ onAddItem, error, onDismissError }: AddElementFormProps) => {
+const AddElementForm = ({
+  onAddItem,
+  error,
+  onDismissError,
+}: AddElementFormProps) => {
+  const handleAddItem = (itemName: string) => {
+    const normalizedItem = normalizeText(itemName); // ✅ Normalize ici
+    onAddItem(normalizedItem);
+  };
+
   return (
     <div className="bg-gradient-to-br from-white to-secondary-50 rounded-xl p-6 border-2 border-secondary-200 shadow-lg">
       <div className="flex items-center gap-3 mb-4">
@@ -17,7 +27,7 @@ const AddElementForm = ({ onAddItem, error, onDismissError }: AddElementFormProp
       </div>
 
       <InputField
-        onAddItem={onAddItem}
+        onAddItem={handleAddItem} // ✅ Passe la fonction wrapper
         placeholder="Entrez votre choix..."
         buttonLabel="➕ Ajouter"
         errorMessage={error}

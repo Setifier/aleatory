@@ -68,7 +68,6 @@ const LotterySection = ({
   // Clear l'historique si non connecté et qu'on actualise
   useEffect(() => {
     if (!isAuthenticated) {
-      // L'historique sera perdu au refresh, c'est voulu
       const handleBeforeUnload = () => {
         clearHistory();
       };

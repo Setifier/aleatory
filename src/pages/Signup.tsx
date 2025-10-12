@@ -3,7 +3,7 @@ import Button from "../components/ui/Button";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth, getErrorMessage } from "../context/AuthContext";
 import { formatAndValidatePseudo } from "../lib/pseudoUtils";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
+import ConfirmModal from "../components/ui/ConfirmModal";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -20,13 +20,11 @@ const Signup = () => {
 
   const auth = UserAuth();
   const navigate = useNavigate();
-  
+
   if (!auth) {
     return null;
   }
   const { signUpNewUser } = auth;
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +65,9 @@ const Signup = () => {
         // Compte existant - afficher la modale
         setShowAccountExistsModal(true);
       } else {
-        setError(result.error ? getErrorMessage(result.error) : "Erreur d'inscription");
+        setError(
+          result.error ? getErrorMessage(result.error) : "Erreur d'inscription"
+        );
       }
     } catch {
       setError("Une erreur est survenue lors de l'inscription");
@@ -130,13 +130,38 @@ const Signup = () => {
                   className="px-3 py-2 bg-gray-100 border border-l-0 border-secondary-300 rounded-r-lg text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors flex items-center"
                 >
                   {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                      />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
                     </svg>
                   )}
                 </button>
@@ -164,13 +189,38 @@ const Signup = () => {
                   className="px-3 py-2 bg-gray-100 border border-l-0 border-secondary-300 rounded-r-lg text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors flex items-center"
                 >
                   {showConfirmPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                      />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
                     </svg>
                   )}
                 </button>
@@ -216,7 +266,7 @@ const Signup = () => {
         </div>
 
         {/* Dialog Email de confirmation */}
-        <ConfirmDialog
+        <ConfirmModal
           isOpen={showEmailConfirmDialog}
           title="Email de confirmation envoyé"
           message={`Un email de confirmation a été envoyé à ${confirmationEmail}.\n\nVeuillez cliquer sur le lien dans l'email pour activer votre compte, puis vous connecter.`}
@@ -230,8 +280,9 @@ const Signup = () => {
             setConfirmationEmail("");
             navigate("/signin");
           }}
-          confirmText="Compris"
-          cancelText="Fermer"
+          confirmLabel="Compris"
+          cancelLabel="Fermer"
+          advancedA11y={true}
         />
 
         {/* Modale compte existant */}

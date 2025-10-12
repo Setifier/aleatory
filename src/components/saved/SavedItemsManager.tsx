@@ -3,8 +3,8 @@ import { SavedItem } from "../../lib/savedItemsService";
 import Button from "../ui/Button";
 import ConfirmModal from "../ui/ConfirmModal";
 import SearchBar from "../ui/SearchBar";
-import FolderAssignmentMenu from "./FolderAssignmentMenu";
-import QuickAddItemForm from "./QuickAddItemForm";
+import FolderAssignmentMenu from "../library/FolderAssignmentMenu";
+import QuickAddItemForm from "../library/QuickAddItemForm";
 
 interface SavedItemsManagerProps {
   savedItems: SavedItem[];
@@ -72,10 +72,7 @@ const SavedItemsManager = ({
     onAddToLottery(itemName);
   };
 
-  const handleOpenFolderMenu = (
-    event: React.MouseEvent,
-    item: SavedItem
-  ) => {
+  const handleOpenFolderMenu = (event: React.MouseEvent, item: SavedItem) => {
     event.preventDefault(); // Empêcher le clic droit par défaut
     event.stopPropagation();
     setFolderMenu({
@@ -172,7 +169,9 @@ const SavedItemsManager = ({
                 Aucun élément sauvegardé
               </p>
               <p className="text-accent-500 text-xs">
-                {onSaveItem ? "Cliquez sur ➕ pour ajouter un élément" : "Sauvegardez depuis le tirage"}
+                {onSaveItem
+                  ? "Cliquez sur ➕ pour ajouter un élément"
+                  : "Sauvegardez depuis le tirage"}
               </p>
             </div>
           ) : (
@@ -285,7 +284,7 @@ const SavedItemsManager = ({
                             );
                         }}
                         label="Tout ajouter"
-                        className="bg-primary-100 hover:bg-primary-200 text-primary-700 text-sm px-4 py-2"
+                        className="w-full text-sm py-2"
                       />
                     )}
                   </div>
@@ -349,7 +348,10 @@ const SavedItemsManager = ({
         onClose={closeFolderMenu}
         itemId={folderMenu.itemId}
         itemName={folderMenu.itemName}
-        currentFolderIds={savedItems.find(item => item.id === folderMenu.itemId)?.folder_ids || []}
+        currentFolderIds={
+          savedItems.find((item) => item.id === folderMenu.itemId)
+            ?.folder_ids || []
+        }
         onAssignmentChange={handleFolderAssignmentChange}
         position={folderMenu.position}
       />
