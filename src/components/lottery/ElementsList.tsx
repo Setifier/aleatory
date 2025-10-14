@@ -66,7 +66,7 @@ const ElementsList = ({
                       </div>
                     ) : savedItemsNames.has(item.name) ? (
                       <div className="text-green-300" title="Déjà sauvegardé">
-                        ✅
+                        ✓
                       </div>
                     ) : (
                       <button

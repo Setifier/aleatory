@@ -30,6 +30,7 @@ const LotterySection = ({
     error,
     addItem,
     removeItem,
+    toggleItem, // ✅ Ajoute toggleItem
     drawLottery,
     clearItems,
     clearError,
@@ -78,19 +79,24 @@ const LotterySection = ({
     }
   }, [isAuthenticated, clearHistory]);
 
-  // Écouter les événements d'ajout d'items depuis le gestionnaire d'items sauvegardés
+  // ✅ Écouter les événements depuis SavedItemCard → utilise toggleItem (sans erreur)
   useEffect(() => {
-    const handleAddItem = (event: CustomEvent<{ itemName: string }>) => {
-      addItem(event.detail.itemName, true); // true = isFromSaved
+    const handleToggleFromEvent = (
+      event: CustomEvent<{ itemName: string }>
+    ) => {
+      toggleItem(event.detail.itemName, true); // true = isFromSaved
     };
 
-    window.addEventListener("addItemToLottery", handleAddItem as EventListener);
+    window.addEventListener(
+      "addItemToLottery",
+      handleToggleFromEvent as EventListener
+    );
     return () =>
       window.removeEventListener(
         "addItemToLottery",
-        handleAddItem as EventListener
+        handleToggleFromEvent as EventListener
       );
-  }, [addItem]);
+  }, [toggleItem]);
 
   // Notifier le parent des changements dans la liste des items
   useEffect(() => {
@@ -99,6 +105,7 @@ const LotterySection = ({
     }
   }, [items, onLotteryItemsChange]);
 
+  // ✅ Pour AddElementForm → utilise addItem (avec erreur si doublon)
   const handleAddItem = (itemName: string) => {
     addItem(itemName);
   };
@@ -122,22 +129,6 @@ const LotterySection = ({
 
   return (
     <div className="space-y-6">
-      {/* Header avec style gaming */}
-      <div className="text-center">
-        <div className="relative inline-block">
-          <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent mb-2">
-            LOTTERY MACHINE
-          </h2>
-        </div>
-        <p className="text-accent-600 text-lg">
-          {items.length === 0
-            ? "Ajoutez des éléments pour commencer"
-            : items.length === 1
-            ? "Ajoutez au moins 1 élément de plus"
-            : `${items.length} éléments prêts pour le tirage`}
-        </p>
-      </div>
-
       {/* Zone d'ajout d'éléments */}
       <AddElementForm
         onAddItem={handleAddItem}

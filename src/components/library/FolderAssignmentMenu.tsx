@@ -107,15 +107,14 @@ const FolderAssignmentMenu = ({
     });
 
     if (result.success) {
-      const folderName = folders.find((f) => f.id === folderId)?.folder_name;
-      const action = shouldAssign ? "ajouté à" : "retiré de";
-      setSuccess(`✅ ${action}: ${folderName}`);
       onAssignmentChange(); // Notifier le parent pour rafraîchir
+
+      loadFoldersList(); // Rafraîchir la liste des dossiers
 
       // Effacer le message de succès après un délai
       setTimeout(() => {
         setSuccess("");
-      }, 2000);
+      }, 1000);
     } else {
       setError(result.error || "Erreur lors de l'assignation");
     }
@@ -131,7 +130,7 @@ const FolderAssignmentMenu = ({
       {/* Menu contextuel */}
       <div
         ref={menuRef}
-        className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-64"
+        className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-64 max-w-md w-full inset-4 m-auto max-h-[400px] overflow-y-auto"
       >
         <div className="px-4 py-2 border-b border-gray-100">
           <div className="flex justify-between items-center">
@@ -222,7 +221,7 @@ const FolderAssignmentMenu = ({
         </div>
 
         {/* Liste des dossiers */}
-        <div className="max-h-48 overflow-y-auto">
+        <div className="max-h-[75%] overflow-y-auto">
           {folders.map((folder) => (
             <div
               key={folder.id}

@@ -9,8 +9,8 @@ const LotteryTitle = ({ value, onChange, itemsCount }: LotteryTitleProps) => {
 
   return (
     <div className="bg-gradient-to-br from-white to-secondary-50 rounded-xl p-4 border border-secondary-200 shadow-md">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse"></div>
         <h3 className="text-lg font-semibold text-accent-800">
           Titre du tirage (optionnel)
         </h3>

@@ -10,16 +10,18 @@ interface DropdownMenuItem {
 interface DropdownMenuProps {
   items: DropdownMenuItem[];
   triggerIcon?: string;
-  position?: "left" | "right";
+  alignment?: "left" | "right"; // ✅ Renommé pour éviter confusion
 }
 
 const DropdownMenu = ({
   items,
   triggerIcon = "⋮",
-  position = "right",
+  alignment = "right",
 }: DropdownMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // ✅ Position dynamique
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null); // ✅ Ref pour le bouton
 
   // Close on click outside
   useEffect(() => {
@@ -49,11 +51,22 @@ const DropdownMenu = ({
   }, [isOpen]);
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div ref={menuRef}>
       {/* Trigger button */}
       <button
+        ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
+
+          // ✅ Calculer la position du menu
+          const rect = e.currentTarget.getBoundingClientRect();
+          const menuWidth = 160; // w-40 = 10rem = 160px
+
+          setMenuPosition({
+            top: rect.bottom + 4, // 4px de marge
+            left: alignment === "right" ? rect.right - menuWidth : rect.left,
+          });
+
           setIsOpen(!isOpen);
         }}
         className="p-1 text-accent-400 hover:text-accent-600 hover:bg-accent-100 rounded transition-colors"
@@ -65,9 +78,11 @@ const DropdownMenu = ({
       {/* Dropdown menu */}
       {isOpen && (
         <div
-          className={`absolute ${
-            position === "left" ? "left-0" : "right-0"
-          } mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden`}
+          className="fixed w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] overflow-hidden"
+          style={{
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
+          }}
         >
           {items.map((item, index) => (
             <button

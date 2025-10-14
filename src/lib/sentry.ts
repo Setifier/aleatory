@@ -2,7 +2,6 @@ import * as Sentry from "@sentry/react";
 
 export const initSentry = () => {
   if (import.meta.env.DEV) {
-    console.log("Sentry désactivé en dev");
     return;
   }
 

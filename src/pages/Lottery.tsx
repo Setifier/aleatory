@@ -31,10 +31,10 @@ const Lottery = () => {
     loadFolders,
   } = useFolders();
 
-  // State pour communiquer entre composants - items dans le tirage
+  // State pour communiquer entre composants
   const [currentLotteryItems, setCurrentLotteryItems] = useState<string[]>([]);
 
-  // Fonction pour ajouter un item au tirage depuis SavedItemsManager/FoldersManager
+  // Fonction pour ajouter un item au tirage
   const handleAddToLottery = (itemName: string) => {
     const event = new CustomEvent("addItemToLottery", {
       detail: { itemName },
@@ -42,7 +42,7 @@ const Lottery = () => {
     window.dispatchEvent(event);
   };
 
-  // Fonction pour synchroniser folders/items après assignation
+  // Fonction pour synchroniser folders/items
   const handleFolderAssignmentChange = () => {
     loadSavedItems();
     loadFolders();
@@ -77,39 +77,52 @@ const Lottery = () => {
           </button>
         </div>
 
-        {/* Layout principal */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* ItemsLibrary - Visible seulement si connecté */}
-          {auth?.session && (
-            <div className="lg:w-96 w-full">
-              <ItemsLibrary
-                savedItems={savedItems}
-                loadingSavedItems={loadingSavedItems}
-                savingItems={savingItems}
-                lotteryItems={currentLotteryItems}
-                onSaveItem={handleSaveItem}
-                onDeleteItem={handleDeleteSavedItem}
-                onAddItemToLottery={handleAddToLottery}
-                folders={folders}
-                loadingFolders={loadingFolders}
-                onCreateFolder={handleCreateFolder}
-                onDeleteFolder={handleDeleteFolder}
-                onAddFolder={handleAddFolder}
-                onRefreshItems={handleFolderAssignmentChange}
-              />
-            </div>
-          )}
+        {/* Lottery Header avec compteur */}
+        <div className="text-center mb-6">
+          <div className="relative inline-block">
+            <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent mb-2">
+              LOTTERY MACHINE
+            </h2>
+          </div>
+          <p className="text-accent-600 text-lg">
+            {currentLotteryItems.length === 0
+              ? "Ajoutez des éléments pour commencer"
+              : currentLotteryItems.length === 1
+              ? "Ajoutez au moins 1 élément de plus"
+              : `${currentLotteryItems.length} éléments prêts pour le tirage`}
+          </p>
+        </div>
 
-          {/* Section principale - Tirage au sort */}
-          <div className="flex-1 max-w-4xl mx-auto w-full">
-            <LotterySection
-              onSaveItem={auth?.session ? handleSaveItem : undefined}
-              savedItemsNames={savedItemsSet}
+        {/* ItemsLibrary (si connecté) */}
+        {auth?.session && (
+          <div className="max-w-4xl mx-auto mb-6">
+            <ItemsLibrary
+              savedItems={savedItems}
+              loadingSavedItems={loadingSavedItems}
               savingItems={savingItems}
-              isAuthenticated={!!auth?.session}
-              onLotteryItemsChange={setCurrentLotteryItems}
+              lotteryItems={currentLotteryItems}
+              onSaveItem={handleSaveItem}
+              onDeleteItem={handleDeleteSavedItem}
+              onAddItemToLottery={handleAddToLottery}
+              folders={folders}
+              loadingFolders={loadingFolders}
+              onCreateFolder={handleCreateFolder}
+              onDeleteFolder={handleDeleteFolder}
+              onAddFolder={handleAddFolder}
+              onRefreshItems={handleFolderAssignmentChange}
             />
           </div>
+        )}
+
+        {/* Section principale - Lottery (toujours visible) */}
+        <div className="max-w-4xl mx-auto">
+          <LotterySection
+            onSaveItem={auth?.session ? handleSaveItem : undefined}
+            savedItemsNames={savedItemsSet}
+            savingItems={savingItems}
+            isAuthenticated={!!auth?.session}
+            onLotteryItemsChange={setCurrentLotteryItems}
+          />
         </div>
       </div>
     </div>

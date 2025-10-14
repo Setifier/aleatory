@@ -86,7 +86,7 @@ export const useLottery = (isAuthenticated: boolean = false) => {
       }
 
       const newItem: LotteryItem = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        id: crypto.randomUUID(),
         name: trimmedName,
         isFromSaved,
       };
@@ -105,6 +105,35 @@ export const useLottery = (isAuthenticated: boolean = false) => {
 
   const removeItem = useCallback((itemId: string) => {
     setItems((prev) => prev.filter((item) => item.id !== itemId));
+  }, []);
+
+  // ✅ NOUVELLE FONCTION : Toggle item (ajouter ou retirer sans erreur)
+  const toggleItem = useCallback((name: string, isFromSaved = false) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) return false;
+
+    setItems((prev) => {
+      // Chercher si l'item existe déjà
+      const existingItem = prev.find(
+        (item) => item.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+
+      if (existingItem) {
+        // Item existe → le retirer
+        return prev.filter((item) => item.id !== existingItem.id);
+      } else {
+        // Item n'existe pas → l'ajouter
+        const newItem: LotteryItem = {
+          id: crypto.randomUUID(),
+          name: trimmedName,
+          isFromSaved,
+        };
+        return [...prev, newItem];
+      }
+    });
+
+    setError(null); // Toujours clear l'erreur
+    return true;
   }, []);
 
   const drawLottery = useCallback(
@@ -225,6 +254,7 @@ export const useLottery = (isAuthenticated: boolean = false) => {
     // Actions
     addItem,
     removeItem,
+    toggleItem, // ✅ Ajouté ici
     drawLottery,
     clearItems,
     clearError,
