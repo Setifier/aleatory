@@ -1,29 +1,30 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../ui/Button";
 import ErrorMessage from "../ui/ErrorMessage";
 import SimpleModal from "../ui/SimpleModal";
 import MfaVerificationModal from "./MfaVerificationModal";
-import { scheduleAccountDeletion, validateDeleteAccountData } from "../../lib/accountService";
 import { getUserMfaFactors } from "../../lib/mfaService";
+import { supabase } from "../../lib/supabaseClient";
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
 }
 
 type Step = "warning" | "authentication" | "confirmation" | "mfa";
 
-const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalProps) => {
+const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>("warning");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  
+
   // Données d'authentification
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
-  
+
   // MFA
   const [showMfaModal, setShowMfaModal] = useState(false);
   const [hasMfa, setHasMfa] = useState(false);
@@ -50,22 +51,44 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
     setLoading(true);
 
     try {
-      // Vérifier s'il y a du MFA configuré
+      // ✅ Vérifier le mot de passe ICI
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.email) {
+        setError("Email utilisateur introuvable");
+        setLoading(false);
+        return;
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: password,
+      });
+
+      if (signInError) {
+        setError("Mot de passe incorrect");
+        setLoading(false);
+        return;
+      }
+
+      // Mot de passe OK, continuer
       const mfaResult = await getUserMfaFactors();
-      const hasActiveMfa = mfaResult.factors.some(f => f.status === "verified");
+      const hasActiveMfa = mfaResult.factors.some(
+        (f) => f.status === "verified"
+      );
       setHasMfa(hasActiveMfa);
 
       if (hasActiveMfa) {
-        // Si MFA activé, demander la vérification
         setShowMfaModal(true);
         setLoading(false);
       } else {
-        // Sinon, passer à la confirmation
         setStep("confirmation");
         setLoading(false);
       }
     } catch {
-      setError("Erreur lors de la vérification MFA");
+      setError("Erreur lors de la vérification");
       setLoading(false);
     }
   };
@@ -84,26 +107,34 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
     setError("");
     setLoading(true);
 
-    // Validation finale
-    const validationError = validateDeleteAccountData({ password, confirmationText });
-    if (validationError) {
-      setError(validationError);
+    // ✅ Vérifier UNIQUEMENT le texte de confirmation
+    if (confirmationText.toUpperCase() !== "SUPPRIMER") {
+      setError("Veuillez taper exactement 'SUPPRIMER' pour confirmer");
       setLoading(false);
       return;
     }
 
     try {
-      const result = await scheduleAccountDeletion(password, confirmationText);
-      
-      if (result.success) {
-        onSuccess();
-        handleClose();
-      } else {
-        setError(result.error || "Erreur lors de la programmation de la suppression");
+      // ✅ Appeler directement la fonction SQL
+      const { data, error } = await supabase.rpc("delete_own_account");
+
+      if (error || !data?.success) {
+        setError("Erreur lors de la suppression du compte");
+        setLoading(false);
+        return;
       }
+
+      // Suppression réussie
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        // Ignorer les erreurs de déconnexion
+      }
+
+      handleClose();
+      navigate("/");
     } catch {
       setError("Erreur inattendue lors de la suppression");
-    } finally {
       setLoading(false);
     }
   };
@@ -118,7 +149,13 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
   };
 
   // Composant icône œil pour le mot de passe
-  const EyeIcon = ({ show, onClick }: { show: boolean; onClick: () => void }) => (
+  const EyeIcon = ({
+    show,
+    onClick,
+  }: {
+    show: boolean;
+    onClick: () => void;
+  }) => (
     <button
       type="button"
       onClick={onClick}
@@ -126,13 +163,38 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
       tabIndex={-1}
     >
       {show ? (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 11-4.243-4.243m4.242 4.242L9.88 9.88" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 11-4.243-4.243m4.242 4.242L9.88 9.88"
+          />
         </svg>
       ) : (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+          />
         </svg>
       )}
     </button>
@@ -156,21 +218,19 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
 
               <div className="mb-6">
                 <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4 mb-4 shadow-sm">
-                  <h4 className="font-semibold text-red-800 mb-2">⚠️ Cette action est irréversible</h4>
+                  <h4 className="font-semibold text-red-800 mb-2">
+                    ⚠️ Cette action est irréversible et immédiate
+                  </h4>
                   <ul className="text-red-700 text-sm space-y-1">
-                    <li>• Toutes vos données seront définitivement supprimées</li>
-                    <li>• Tous vos tirages et listes sauvegardées seront perdus</li>
+                    <li>
+                      • Toutes vos données seront définitivement supprimées
+                    </li>
+                    <li>
+                      • Tous vos tirages et listes sauvegardées seront perdus
+                    </li>
                     <li>• Votre pseudo ne pourra plus être utilisé</li>
-                    <li>• Cette action ne peut pas être annulée après 7 jours</li>
+                    <li>• Vous serez immédiatement déconnecté</li>
                   </ul>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-800 mb-2">🕒 Délai de grâce de 7 jours</h4>
-                  <p className="text-blue-700 text-sm">
-                    Vous aurez 7 jours pour changer d'avis et annuler la suppression. 
-                    Un email de confirmation vous sera envoyé avec les instructions.
-                  </p>
                 </div>
               </div>
 
@@ -202,7 +262,8 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
               </div>
 
               <p className="text-gray-600 mb-6">
-                Pour continuer, veuillez confirmer votre identité en saisissant votre mot de passe.
+                Pour continuer, veuillez confirmer votre identité en saisissant
+                votre mot de passe.
                 {hasMfa && " Une vérification 2FA sera également requise."}
               </p>
 
@@ -219,9 +280,9 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
                     placeholder="Votre mot de passe"
                     disabled={loading}
                   />
-                  <EyeIcon 
-                    show={showPassword} 
-                    onClick={() => setShowPassword(!showPassword)} 
+                  <EyeIcon
+                    show={showPassword}
+                    onClick={() => setShowPassword(!showPassword)}
                   />
                 </div>
               </div>
@@ -259,11 +320,12 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
 
               <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4 mb-6 shadow-sm">
                 <p className="text-red-800 font-semibold mb-2">
-                  Dernière étape avant la programmation de la suppression
+                  Dernière étape avant la suppression immédiate
                 </p>
                 <p className="text-red-700 text-sm">
-                  Tapez exactement <strong>SUPPRIMER</strong> dans le champ ci-dessous pour confirmer 
-                  que vous souhaitez programmer la suppression de votre compte dans 7 jours.
+                  Tapez exactement <strong>SUPPRIMER</strong> dans le champ
+                  ci-dessous pour confirmer que vous souhaitez supprimer votre
+                  compte immédiatement.
                 </p>
               </div>
 
@@ -292,9 +354,11 @@ const DeleteAccountModal = ({ isOpen, onClose, onSuccess }: DeleteAccountModalPr
                 />
                 <Button
                   onClick={handleFinalConfirmation}
-                  label={loading ? "Programmation..." : "Programmer la suppression"}
+                  label={loading ? "Suppression..." : "Supprimer mon compte"}
                   className="flex-1 bg-red-500 text-white hover:bg-red-600"
-                  disabled={confirmationText.toUpperCase() !== "SUPPRIMER" || loading}
+                  disabled={
+                    confirmationText.toUpperCase() !== "SUPPRIMER" || loading
+                  }
                 />
               </div>
             </>

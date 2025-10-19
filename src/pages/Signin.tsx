@@ -6,7 +6,8 @@ import {
   useSearchParams,
   useLocation,
 } from "react-router-dom";
-import { UserAuth, getErrorMessage } from "../context/AuthContext";
+import { UserAuth } from "../context/AuthContext";
+import { getErrorMessage } from "../lib/errorUtils";
 
 const Signin = () => {
   const [email, setEmail] = useState("");

@@ -50,14 +50,14 @@ const Home = () => {
             <SelectionCard
               title="Lottery Machine"
               description="Tirage au sort rapide avec un seul gagnant"
-              icon="🎰"
+              image="/assets/lottery_machine.webp"
               onClick={() => navigate("/lottery")}
             />
 
             <SelectionCard
               title="Tournament Mode"
               description="Créez des tournois à élimination directe ou par groupes"
-              icon="🏆"
+              image="/assets/trophy_vector.webp"
               onClick={() => navigate("/tournament")}
             />
           </div>

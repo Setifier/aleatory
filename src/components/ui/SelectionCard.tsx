@@ -1,7 +1,7 @@
 interface TournamentModeCardProps {
   title: string;
   description: string;
-  icon: string;
+  image: string;
   onClick: () => void;
   disabled?: boolean;
 }
@@ -9,7 +9,7 @@ interface TournamentModeCardProps {
 const TournamentModeCard = ({
   title,
   description,
-  icon,
+  image,
   onClick,
   disabled = false,
 }: TournamentModeCardProps) => {
@@ -19,7 +19,7 @@ const TournamentModeCard = ({
       disabled={disabled}
       className={`
         group relative bg-gradient-to-br from-white to-secondary-50 
-        rounded-2xl p-8 border-2 transition-all duration-300
+        rounded-2xl border-2 transition-all duration-300
         ${
           disabled
             ? "border-secondary-200 opacity-50 cursor-not-allowed"
@@ -33,9 +33,13 @@ const TournamentModeCard = ({
       )}
 
       <div className="relative">
-        {/* Icon */}
-        <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
-          {icon}
+        {/* Vector */}
+        <div className="group-hover:scale-110 transition-transform duration-300 -translate-y-6">
+          <img
+            alt={`${title} illustration`}
+            src={image}
+            className="w-40 h-40 mx-auto object-contain group-hover:scale-110 transition-transform duration-300"
+          />
         </div>
 
         {/* Title */}
@@ -46,7 +50,7 @@ const TournamentModeCard = ({
 
         {/* Arrow indicator */}
         {!disabled && (
-          <div className="mt-4 flex items-center justify-center gap-2 text-primary-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="m-4 flex items-center justify-center gap-2 text-primary-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <span>Commencer</span>
             <svg
               className="w-4 h-4"

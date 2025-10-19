@@ -9,7 +9,7 @@ const SearchBar = ({
   searchTerm,
   onSearchChange,
   placeholder = "Rechercher...",
-  className = ""
+  className = "",
 }: SearchBarProps) => {
   return (
     <div className={`relative ${className}`}>

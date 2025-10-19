@@ -1,35 +1,14 @@
-import {
-  createContext,
-  useEffect,
-  useState,
-  useContext,
-  useCallback,
-} from "react";
+import { createContext, useEffect, useState, useContext } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 import { isMfaEnabledInPreferences } from "../lib/mfaPreferences";
-import { getAccountDeletionStatus } from "../lib/accountService";
+import { SupabaseError } from "../lib/errorUtils";
 
 import * as Sentry from "@sentry/react";
 
 interface SessionWithAal extends Session {
   aal?: "aal1" | "aal2";
 }
-
-// Type pour les erreurs Supabase
-type SupabaseError = {
-  message: string;
-  status?: number;
-  code?: string;
-};
-
-// Helper pour extraire le message d'une erreur
-export const getErrorMessage = (error: string | SupabaseError): string => {
-  if (typeof error === "string") {
-    return error;
-  }
-  return error.message;
-};
 
 interface AuthResult {
   success: boolean;
@@ -58,11 +37,6 @@ interface AuthContextType {
     currentPassword: string,
     newPassword: string
   ) => Promise<AuthResult>;
-  // Suppression de compte
-  isAccountScheduledForDeletion: boolean;
-  accountDeletionDate?: Date;
-  accountDeletionDaysRemaining?: number;
-  refreshDeletionStatus: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -74,15 +48,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     challengeId: string;
   } | null>(null);
   const [isMfaRequired, setIsMfaRequired] = useState(false);
-
-  // États pour la suppression de compte
-  const [isAccountScheduledForDeletion, setIsAccountScheduledForDeletion] =
-    useState(false);
-  const [accountDeletionDate, setAccountDeletionDate] = useState<
-    Date | undefined
-  >(undefined);
-  const [accountDeletionDaysRemaining, setAccountDeletionDaysRemaining] =
-    useState<number | undefined>(undefined);
 
   // Sign Up
   const signUpNewUser = async (
@@ -411,26 +376,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Rafraîchir le statut de suppression de compte
-  const refreshDeletionStatus = useCallback(async () => {
-    if (session) {
-      const status = await getAccountDeletionStatus();
-      setIsAccountScheduledForDeletion(status.isScheduledForDeletion);
-      setAccountDeletionDate(status.scheduledDate);
-      setAccountDeletionDaysRemaining(status.daysRemaining);
-    } else {
-      // Reset si pas de session
-      setIsAccountScheduledForDeletion(false);
-      setAccountDeletionDate(undefined);
-      setAccountDeletionDaysRemaining(undefined);
-    }
-  }, [session]);
-
-  // Rafraîchir le statut de suppression lors du changement de session
-  useEffect(() => {
-    refreshDeletionStatus();
-  }, [refreshDeletionStatus]);
-
   return (
     <AuthContext.Provider
       value={{
@@ -442,10 +387,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         verifyMfaAndSignIn,
         isMfaRequired,
         updatePassword,
-        isAccountScheduledForDeletion,
-        accountDeletionDate,
-        accountDeletionDaysRemaining,
-        refreshDeletionStatus,
       }}
     >
       {children}

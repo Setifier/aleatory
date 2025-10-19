@@ -167,7 +167,7 @@ const ItemsLibrary = ({
                 <SearchBar
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
-                  placeholder="Rechercher dans les dossiers et éléments..."
+                  placeholder="🔍 Rechercher dans les dossiers..."
                 />
               </div>
 
@@ -241,7 +241,7 @@ const ItemsLibrary = ({
                 <SearchBar
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
-                  placeholder="Rechercher dans les dossiers et éléments..."
+                  placeholder="🔍 Rechercher dans les éléments..."
                 />
               </div>
 

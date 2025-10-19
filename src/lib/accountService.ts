@@ -1,172 +1,40 @@
 import { supabase } from "./supabaseClient";
 
-export interface ScheduleDeletionResult {
-  success: boolean;
-  error?: string;
-  scheduledDate?: Date;
-}
-
-export interface CancelDeletionResult {
+export interface DeleteAccountResult {
   success: boolean;
   error?: string;
 }
 
-export interface DeleteAccountData {
-  password: string;
-  confirmationText: string;
-}
-
 /**
- * Programmer la suppression du compte dans 7 jours
+ * Supprimer le compte immédiatement via la fonction SQL
  */
-export const scheduleAccountDeletion = async (
-  password: string,
-  confirmationText: string
-): Promise<ScheduleDeletionResult> => {
-  try {
-    // Vérifier que l'utilisateur est connecté
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return { success: false, error: "Utilisateur non connecté" };
-    }
+export const deleteAccountImmediately =
+  async (): Promise<DeleteAccountResult> => {
+    try {
+      // ✅ Appeler directement la fonction SQL
+      const { data, error } = await supabase.rpc("delete_own_account");
 
-    // Vérifier le mot de passe en tentant une réauthentification
-    if (!user.email) {
-      return { success: false, error: "Email utilisateur introuvable" };
-    }
+      if (error) {
+        console.error("Erreur suppression:", error);
+        return {
+          success: false,
+          error: "Erreur lors de la suppression du compte",
+        };
+      }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: password
-    });
+      if (!data?.success) {
+        return {
+          success: false,
+          error: data?.error || "Erreur lors de la suppression",
+        };
+      }
 
-    if (signInError) {
-      return { success: false, error: "Mot de passe incorrect" };
-    }
-
-    // Vérifier le texte de confirmation
-    if (confirmationText.toUpperCase() !== "SUPPRIMER") {
-      return { success: false, error: "Texte de confirmation incorrect" };
-    }
-
-    // Appeler la fonction Supabase pour programmer la suppression
-    const { data, error } = await supabase.rpc('schedule_account_deletion');
-
-    if (error) {
-      // Error logged for debugging
-      return { 
-        success: false, 
-        error: "Erreur lors de la programmation de la suppression" 
+      return { success: true };
+    } catch (err) {
+      console.error("Erreur inattendue:", err);
+      return {
+        success: false,
+        error: "Erreur inattendue lors de la suppression",
       };
     }
-
-    if (!data?.success) {
-      return { 
-        success: false, 
-        error: data?.error || "Erreur lors de la programmation" 
-      };
-    }
-
-    return { 
-      success: true, 
-      scheduledDate: new Date(data.scheduled_date)
-    };
-
-  } catch (error) {
-    // Error logged for debugging
-    return { 
-      success: false, 
-      error: "Erreur inattendue lors de la programmation" 
-    };
-  }
-};
-
-/**
- * Annuler la suppression programmée du compte
- */
-export const cancelAccountDeletion = async (): Promise<CancelDeletionResult> => {
-  try {
-    // Appeler la fonction Supabase pour annuler la suppression
-    const { data, error } = await supabase.rpc('cancel_account_deletion');
-
-    if (error) {
-      // Error logged for debugging
-      return { 
-        success: false, 
-        error: "Erreur lors de l'annulation" 
-      };
-    }
-
-    if (!data?.success) {
-      return { 
-        success: false, 
-        error: data?.error || "Erreur lors de l'annulation" 
-      };
-    }
-
-    return { success: true };
-
-  } catch (error) {
-    // Error logged for debugging
-    return { 
-      success: false, 
-      error: "Erreur inattendue lors de l'annulation" 
-    };
-  }
-};
-
-/**
- * Vérifier si le compte est programmé pour suppression
- */
-export const getAccountDeletionStatus = async (): Promise<{
-  isScheduledForDeletion: boolean;
-  scheduledDate?: Date;
-  daysRemaining?: number;
-}> => {
-  try {
-    // Appeler la fonction Supabase pour récupérer le statut
-    const { data, error } = await supabase.rpc('get_deletion_status');
-
-    if (error) {
-      // Error logged for debugging
-      return { isScheduledForDeletion: false };
-    }
-
-    if (!data?.success) {
-      // Error logged for debugging
-      return { isScheduledForDeletion: false };
-    }
-
-    if (!data.is_scheduled) {
-      return { isScheduledForDeletion: false };
-    }
-
-    return {
-      isScheduledForDeletion: true,
-      scheduledDate: new Date(data.scheduled_date),
-      daysRemaining: Math.max(0, data.days_remaining)
-    };
-  } catch (error) {
-    // Error logged for debugging
-    return { isScheduledForDeletion: false };
-  }
-};
-
-/**
- * Valider les données de suppression de compte
- */
-export const validateDeleteAccountData = (data: DeleteAccountData): string | null => {
-  if (!data.password.trim()) {
-    return "Le mot de passe est requis";
-  }
-
-  if (data.password.length < 8) {
-    return "Mot de passe trop court";
-  }
-
-  if (data.confirmationText.toUpperCase() !== "SUPPRIMER") {
-    return "Veuillez taper exactement 'SUPPRIMER' pour confirmer";
-  }
-
-  return null;
-};
+  };

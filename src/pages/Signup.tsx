@@ -1,7 +1,8 @@
 import { useState } from "react";
 import Button from "../components/ui/Button";
 import { Link, useNavigate } from "react-router-dom";
-import { UserAuth, getErrorMessage } from "../context/AuthContext";
+import { UserAuth } from "../context/AuthContext";
+import { getErrorMessage } from "../lib/errorUtils";
 import { formatAndValidatePseudo } from "../lib/pseudoUtils";
 import ConfirmModal from "../components/ui/ConfirmModal";
 

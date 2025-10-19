@@ -13,18 +13,10 @@ const Settings = () => {
   const navigate = useNavigate();
   const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);
   const [pendingEmailChange, setPendingEmailChange] = useState<{
-    oldEmail: string,
-    newEmail: string,
-    expiresAt: number
+    oldEmail: string;
+    newEmail: string;
+    expiresAt: number;
   } | null>(null);
-
-  const handleDeleteAccountSuccess = () => {
-    auth?.refreshDeletionStatus();
-  };
-
-  const handleCancelDeletion = () => {
-    auth?.refreshDeletionStatus();
-  };
 
   const handleSignOut = async () => {
     try {
@@ -50,15 +42,15 @@ const Settings = () => {
   // Fonctions pour gérer la persistance
   const savePendingEmailChange = (data: typeof pendingEmailChange) => {
     if (data) {
-      localStorage.setItem('pendingEmailChange', JSON.stringify(data));
+      localStorage.setItem("pendingEmailChange", JSON.stringify(data));
     } else {
-      localStorage.removeItem('pendingEmailChange');
+      localStorage.removeItem("pendingEmailChange");
     }
   };
 
   const loadPendingEmailChange = () => {
     try {
-      const saved = localStorage.getItem('pendingEmailChange');
+      const saved = localStorage.getItem("pendingEmailChange");
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -110,8 +102,10 @@ const Settings = () => {
 
   // Surveiller les changements d'authentification
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
         checkEmailConfirmations();
       }
     });
@@ -166,10 +160,7 @@ const Settings = () => {
         <SessionSection onSignOut={handleSignOut} />
 
         {/* Advanced Actions Section */}
-        <AdvancedActionsSection
-          onDeleteAccountSuccess={handleDeleteAccountSuccess}
-          onCancelDeletion={handleCancelDeletion}
-        />
+        <AdvancedActionsSection />
 
         {/* Email Confirmation Modal */}
         {pendingEmailChange && (

@@ -8,7 +8,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Tournament from "./pages/Tournament";
 import Lottery from "./pages/Lottery";
-import AuthProtectedRoute from "./components/auth/AuthProtectedRoute";
+import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
 
 export const router = createBrowserRouter([
   {
@@ -22,18 +22,26 @@ export const router = createBrowserRouter([
       {
         path: "signup",
         element: (
-          <AuthProtectedRoute>
+          <PublicOnlyRoute>
             <Signup />
-          </AuthProtectedRoute>
+          </PublicOnlyRoute>
         ),
       },
       {
         path: "signin",
-        element: <Signin />,
+        element: (
+          <PublicOnlyRoute>
+            <Signin />
+          </PublicOnlyRoute>
+        ),
       },
       {
         path: "forgot-password",
-        element: <ForgotPassword />,
+        element: (
+          <PublicOnlyRoute>
+            <ForgotPassword />
+          </PublicOnlyRoute>
+        ),
       },
       {
         path: "reset-password",
