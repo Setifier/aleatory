@@ -11,7 +11,6 @@ const Lottery = () => {
   const navigate = useNavigate();
   const auth = UserAuth();
 
-  // Hooks pour saved items et folders
   const {
     savedItems,
     savedItemsSet,
@@ -31,10 +30,8 @@ const Lottery = () => {
     loadFolders,
   } = useFolders();
 
-  // State pour communiquer entre composants
   const [currentLotteryItems, setCurrentLotteryItems] = useState<string[]>([]);
 
-  // Fonction pour ajouter un item au tirage
   const handleAddToLottery = (itemName: string) => {
     const event = new CustomEvent("addItemToLottery", {
       detail: { itemName },
@@ -42,7 +39,6 @@ const Lottery = () => {
     window.dispatchEvent(event);
   };
 
-  // Fonction pour synchroniser folders/items
   const handleFolderAssignmentChange = () => {
     loadSavedItems();
     loadFolders();
@@ -77,14 +73,13 @@ const Lottery = () => {
           </button>
         </div>
 
-        {/* Lottery Header avec compteur */}
         <div className="text-center mb-6">
           <div className="relative inline-block">
-            <h2 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent mb-2">
+            <h2 className="text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent mb-2">
               LOTTERY MACHINE
             </h2>
           </div>
-          <p className="text-accent-600 text-lg">
+          <p className="text-accent-600 text-sm sm:text-base md:text-lg">
             {currentLotteryItems.length === 0
               ? "Ajoutez des éléments pour commencer"
               : currentLotteryItems.length === 1
@@ -93,7 +88,6 @@ const Lottery = () => {
           </p>
         </div>
 
-        {/* ItemsLibrary (si connecté) */}
         {auth?.session && (
           <div className="max-w-4xl mx-auto mb-6">
             <ItemsLibrary
@@ -114,7 +108,6 @@ const Lottery = () => {
           </div>
         )}
 
-        {/* Section principale - Lottery (toujours visible) */}
         <div className="max-w-4xl mx-auto">
           <LotterySection
             onSaveItem={auth?.session ? handleSaveItem : undefined}

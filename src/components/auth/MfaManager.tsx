@@ -24,7 +24,7 @@ const MfaManager = () => {
   const [error, setError] = useState<string>("");
   const [isMfaEnabled, setIsMfaEnabled] = useState(true);
 
-  // États pour l'enrollment TOTP
+
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [qrCode, setQrCode] = useState<string>("");
   const [secret, setSecret] = useState<string>("");
@@ -32,14 +32,14 @@ const MfaManager = () => {
   const [totpCode, setTotpCode] = useState<string>("");
   const [verifyLoading, setVerifyLoading] = useState(false);
 
-  // États pour la modale de désactivation
+
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [disableLoading, setDisableLoading] = useState(false);
 
-  // État pour la vérification MFA avant désactivation
+
   const [showMfaVerification, setShowMfaVerification] = useState(false);
 
-  // États pour le dialog de confirmation de suppression
+
   const [showRemoveFactorDialog, setShowRemoveFactorDialog] = useState(false);
   const [pendingFactorIdToRemove, setPendingFactorIdToRemove] =
     useState<string>("");
@@ -58,35 +58,35 @@ const MfaManager = () => {
 
   useEffect(() => {
     loadMfaFactors();
-    // Charger la préférence MFA
+
     setIsMfaEnabled(isMfaEnabledInPreferences());
   }, []);
 
-  // Sauvegarder la préférence MFA
+
   const toggleMfa = (enabled: boolean) => {
     if (!enabled && factors.length > 0) {
-      // Si on désactive et qu'il y a des facteurs vérifiés, demander la vérification MFA
+
       const verifiedFactors = factors.filter((f) => f.status === "verified");
       if (verifiedFactors.length > 0) {
         setShowMfaVerification(true);
       } else {
-        // S'il n'y a que des facteurs non vérifiés, montrer la modale d'avertissement directement
+
         setShowDisableModal(true);
       }
     } else {
-      // Sinon, activer/désactiver directement
+
       setIsMfaEnabled(enabled);
       setMfaEnabledPreference(enabled);
     }
   };
 
-  // Gérer le succès de la vérification MFA
+
   const handleMfaVerificationSuccess = () => {
-    // Après vérification réussie, montrer la modale de confirmation
+
     setShowDisableModal(true);
   };
 
-  // Confirmer la désactivation et supprimer tous les facteurs
+
   const confirmDisableMfa = async () => {
     setDisableLoading(true);
     setError("");
@@ -103,7 +103,7 @@ const MfaManager = () => {
         }
       }
 
-      // Désactiver les préférences MFA
+
       setIsMfaEnabled(false);
       setMfaEnabledPreference(false);
       setShowDisableModal(false);
@@ -135,7 +135,7 @@ const MfaManager = () => {
     }
   };
 
-  // Vérifier le code TOTP et finaliser l'enrollment
+
   const handleVerifyTotp = async () => {
     if (!totpCode.trim()) {
       setError("Veuillez entrer un code à 6 chiffres");
@@ -152,7 +152,7 @@ const MfaManager = () => {
       setQrCode("");
       setSecret("");
       setError("");
-      // Recharger immédiatement
+
       await loadMfaFactors();
     } else {
       setError(result.error || "Code invalide");
@@ -166,7 +166,7 @@ const MfaManager = () => {
     setShowRemoveFactorDialog(true);
   };
 
-  // Confirmer et exécuter la suppression du facteur
+
   const confirmRemoveFactor = async () => {
     if (!pendingFactorIdToRemove) return;
 
@@ -190,10 +190,10 @@ const MfaManager = () => {
   };
 
   const closeModal = async () => {
-    // Si on ferme le modal pendant l'enrollment, supprimer le facteur créé
+
     if (currentFactorId) {
       await unenrollMfaFactor(currentFactorId);
-      await loadMfaFactors(); // Rafraîchir la liste
+      await loadMfaFactors();
     }
 
     setShowEnrollModal(false);
@@ -416,7 +416,7 @@ const MfaManager = () => {
         </div>
       </SimpleModal>
 
-      {/* Modal de vérification MFA avant désactivation */}
+      {/* MFA Verification Modal */}
       <MfaFactorSelectionModal
         isOpen={showMfaVerification}
         onClose={() => setShowMfaVerification(false)}
@@ -424,7 +424,7 @@ const MfaManager = () => {
         factors={factors}
       />
 
-      {/* Modal de désactivation MFA */}
+      {/* MFA Disable Confirmation Modal */}
       <DisableMfaModal
         isOpen={showDisableModal}
         onClose={() => setShowDisableModal(false)}

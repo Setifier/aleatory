@@ -22,9 +22,6 @@ export interface VerifyTotpResult {
   error?: string;
 }
 
-/**
- * Récupérer tous les facteurs MFA de l'utilisateur
- */
 export const getUserMfaFactors = async (): Promise<{
   factors: MfaFactor[];
   error?: string;
@@ -33,7 +30,6 @@ export const getUserMfaFactors = async (): Promise<{
     const { data, error } = await supabase.auth.mfa.listFactors();
     
     if (error) {
-      // Error logged for debugging
       return { factors: [], error: error.message };
     }
 
@@ -58,9 +54,6 @@ export const getUserMfaFactors = async (): Promise<{
   }
 };
 
-/**
- * Inscrire un nouveau facteur TOTP (Google Authenticator)
- */
 export const enrollTotp = async (friendlyName?: string): Promise<EnrollTotpResult> => {
   try {
     const { data, error } = await supabase.auth.mfa.enroll({
@@ -69,7 +62,6 @@ export const enrollTotp = async (friendlyName?: string): Promise<EnrollTotpResul
     });
 
     if (error) {
-      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
@@ -98,9 +90,6 @@ export const enrollTotp = async (friendlyName?: string): Promise<EnrollTotpResul
   }
 };
 
-/**
- * Vérifier un code TOTP pour finaliser l'inscription
- */
 export const verifyTotpEnrollment = async (
   factorId: string, 
   code: string
@@ -112,7 +101,6 @@ export const verifyTotpEnrollment = async (
     });
 
     if (error) {
-      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
@@ -130,9 +118,6 @@ export const verifyTotpEnrollment = async (
   }
 };
 
-/**
- * Supprimer un facteur MFA
- */
 export const unenrollMfaFactor = async (factorId: string): Promise<{
   success: boolean;
   error?: string;
@@ -141,7 +126,6 @@ export const unenrollMfaFactor = async (factorId: string): Promise<{
     const { error } = await supabase.auth.mfa.unenroll({ factorId });
 
     if (error) {
-      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
@@ -159,9 +143,6 @@ export const unenrollMfaFactor = async (factorId: string): Promise<{
   }
 };
 
-/**
- * Créer un défi MFA pour la connexion
- */
 export const createMfaChallenge = async (factorId: string): Promise<{
   success: boolean;
   challengeId?: string;
@@ -171,7 +152,6 @@ export const createMfaChallenge = async (factorId: string): Promise<{
     const { data, error } = await supabase.auth.mfa.challenge({ factorId });
 
     if (error) {
-      // Error logged for debugging
       return { success: false, error: error.message };
     }
 
@@ -189,9 +169,6 @@ export const createMfaChallenge = async (factorId: string): Promise<{
   }
 };
 
-/**
- * Vérifier un code MFA lors de la connexion
- */
 export const verifyMfaCode = async (
   factorId: string,
   challengeId: string, 
@@ -205,7 +182,6 @@ export const verifyMfaCode = async (
     });
 
     if (error) {
-      // Error logged for debugging
       return { success: false, error: error.message };
     }
 

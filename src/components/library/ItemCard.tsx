@@ -11,7 +11,7 @@ interface ItemCardProps {
   onToggle: (itemName: string) => void;
   onOpenFolderMenu: (item: SavedItem) => void;
   onDelete: (itemName: string) => void;
-  compact?: boolean; // Pour style condensé dans folders
+  compact?: boolean;
   showFolderTags?: boolean;
 }
 
@@ -64,7 +64,7 @@ const ItemCard = ({
           <div className="flex-1 min-w-0 ">
             <div
               className={`font-medium truncate ml-2 ${
-                compact ? "text-base" : "text-lg"
+                compact ? "text-sm sm:text-base" : "text-base sm:text-lg"
               }`}
             >
               {item.item_name}

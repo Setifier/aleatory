@@ -32,9 +32,6 @@ export interface CheckFolderExistsResult {
   error?: string;
 }
 
-/**
- * Vérifier si un dossier existe déjà pour l'utilisateur connecté
- */
 export const checkFolderExists = async (
   folderName: string
 ): Promise<CheckFolderExistsResult> => {
@@ -47,7 +44,6 @@ export const checkFolderExists = async (
       return { exists: false, error: "Utilisateur non connecté" };
     }
 
-    // Normaliser le nom du dossier pour la comparaison
     const normalizedName = normalizeText(folderName);
 
     const { data, error } = await supabase
@@ -69,9 +65,6 @@ export const checkFolderExists = async (
   }
 };
 
-/**
- * Créer un nouveau dossier pour l'utilisateur connecté
- */
 export const createFolder = async (
   folderName: string
 ): Promise<CreateFolderResult> => {
@@ -84,7 +77,6 @@ export const createFolder = async (
       return { success: false, error: "Utilisateur non connecté" };
     }
 
-    // Valider et normaliser le nom du dossier
     const trimmedName = folderName.trim();
     if (!trimmedName) {
       return {
@@ -100,10 +92,7 @@ export const createFolder = async (
       };
     }
 
-    // Normaliser le nom du dossier (comme pour les items)
     const normalizedName = normalizeText(trimmedName);
-
-    // Vérifier si le dossier existe déjà
     const existsResult = await checkFolderExists(normalizedName);
     if (existsResult.error) {
       return { success: false, error: existsResult.error };
@@ -113,7 +102,6 @@ export const createFolder = async (
       return { success: false, error: "Un dossier avec ce nom existe déjà" };
     }
 
-    // Créer le dossier
     const { data, error } = await supabase
       .from("folders")
       .insert([
@@ -137,9 +125,6 @@ export const createFolder = async (
   }
 };
 
-/**
- * Charger tous les dossiers de l'utilisateur connecté
- */
 export const loadUserFolders = async (): Promise<LoadFoldersResult> => {
   try {
     const {
@@ -168,9 +153,6 @@ export const loadUserFolders = async (): Promise<LoadFoldersResult> => {
   }
 };
 
-/**
- * Supprimer un dossier de l'utilisateur connecté
- */
 export const deleteFolder = async (
   folderName: string
 ): Promise<DeleteFolderResult> => {
@@ -183,7 +165,6 @@ export const deleteFolder = async (
       return { success: false, error: "Utilisateur non connecté" };
     }
 
-    // Normaliser le nom du dossier pour la suppression
     const normalizedName = normalizeText(folderName);
 
     const { error } = await supabase

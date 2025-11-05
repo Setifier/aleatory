@@ -38,7 +38,6 @@ const ForgotPassword = () => {
         );
         setEmail("");
 
-        // Rediriger vers la page de connexion après 3 secondes
         timeoutRef.current = window.setTimeout(() => {
           navigate("/signin", {
             state: {

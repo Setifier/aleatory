@@ -1,9 +1,9 @@
 interface ButtonProps {
-  label?: string; // Texte du bouton
-  onClick?: () => void; // Fonction à appeler lors du clic
-  className?: string; // Classes CSS supplémentaires
-  type?: "button" | "submit" | "reset"; // Type du bouton
-  disabled?: boolean; // Désactiver le bouton
+  label?: string;
+  onClick?: () => void;
+  className?: string;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
 }
 
 const Button = ({

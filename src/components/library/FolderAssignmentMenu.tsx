@@ -38,7 +38,6 @@ const FolderAssignmentMenu = ({
     }
   }, [isOpen]);
 
-  // Fermer le menu quand on clique à l'extérieur
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -73,13 +72,10 @@ const FolderAssignmentMenu = ({
 
     const result = await createFolder(newFolderName.trim());
     if (result.success && result.folder) {
-      // Ajouter le nouveau dossier à la liste
       setFolders((prev) => [result.folder!, ...prev]);
 
-      // Assigner automatiquement l'item au nouveau dossier
       await handleFolderToggle(result.folder.id, true);
 
-      // Reset du formulaire
       setNewFolderName("");
       setShowCreateForm(false);
     } else {
@@ -92,14 +88,12 @@ const FolderAssignmentMenu = ({
     folderId: number,
     shouldAssign: boolean
   ) => {
-    // Ajouter ce dossier au loading
     setLoadingFolders((prev) => new Set([...prev, folderId]));
     setError("");
     setSuccess("");
 
     const result = await toggleItemFolder(itemId, folderId, shouldAssign);
 
-    // Retirer ce dossier du loading
     setLoadingFolders((prev) => {
       const newSet = new Set(prev);
       newSet.delete(folderId);
@@ -107,11 +101,10 @@ const FolderAssignmentMenu = ({
     });
 
     if (result.success) {
-      onAssignmentChange(); // Notifier le parent pour rafraîchir
+      onAssignmentChange();
 
-      loadFoldersList(); // Rafraîchir la liste des dossiers
+      loadFoldersList();
 
-      // Effacer le message de succès après un délai
       setTimeout(() => {
         setSuccess("");
       }, 1000);
@@ -167,7 +160,7 @@ const FolderAssignmentMenu = ({
           </div>
         )}
 
-        {/* Création rapide de dossier */}
+        {/* Quick Folder Creation */}
         <div className="border-b border-gray-100">
           {!showCreateForm ? (
             <button

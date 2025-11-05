@@ -23,13 +23,11 @@ const ResetPassword = () => {
         if (!isMounted) return;
 
         if (error || !data.session) {
-          // ❌ Pas de session = lien invalide
           setError("Lien de réinitialisation invalide ou expiré");
           setIsValidating(false);
           return;
         }
 
-        // ✅ Session valide = tout est OK
         setError("");
         setIsValidating(false);
       } catch {
@@ -40,7 +38,6 @@ const ResetPassword = () => {
       }
     };
 
-    // Petit délai pour laisser Supabase traiter l'URL depuis les fragments
     const timeoutId = setTimeout(() => {
       if (isMounted) {
         handleAuthCallback();
@@ -78,7 +75,6 @@ const ResetPassword = () => {
       if (error) {
         setError(error.message);
       } else {
-        // Succès - rediriger vers la page de connexion avec un message
         navigate("/signin?reset=success");
       }
     } catch {
@@ -88,7 +84,6 @@ const ResetPassword = () => {
     }
   };
 
-  // Afficher un loading pendant la validation
   if (isValidating) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">

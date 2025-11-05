@@ -20,7 +20,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
-  // Données d'authentification
+
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
@@ -51,7 +51,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
     setLoading(true);
 
     try {
-      // ✅ Vérifier le mot de passe ICI
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -107,7 +107,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
     setError("");
     setLoading(true);
 
-    // ✅ Vérifier UNIQUEMENT le texte de confirmation
+
     if (confirmationText.toUpperCase() !== "SUPPRIMER") {
       setError("Veuillez taper exactement 'SUPPRIMER' pour confirmer");
       setLoading(false);
@@ -124,11 +124,11 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
         return;
       }
 
-      // Suppression réussie
+
       try {
         await supabase.auth.signOut();
       } catch {
-        // Ignorer les erreurs de déconnexion
+
       }
 
       handleClose();
@@ -148,7 +148,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
     }
   };
 
-  // Composant icône œil pour le mot de passe
+
   const EyeIcon = ({
     show,
     onClick,
@@ -204,7 +204,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
     <>
       <SimpleModal isOpen={isOpen} onClose={handleClose}>
         <div className="p-6">
-          {/* Étape 1: Avertissement */}
+          {/* Step 1: Warning */}
           {step === "warning" && (
             <>
               <div className="flex items-center mb-4">
@@ -249,7 +249,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
             </>
           )}
 
-          {/* Étape 2: Authentification */}
+          {/* Step 2: Authentication */}
           {step === "authentication" && (
             <>
               <div className="flex items-center mb-4">
@@ -306,7 +306,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
             </>
           )}
 
-          {/* Étape 3: Confirmation finale */}
+          {/* Step 3: Final Confirmation */}
           {step === "confirmation" && (
             <>
               <div className="flex items-center mb-4">

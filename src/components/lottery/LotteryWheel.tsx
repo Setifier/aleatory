@@ -25,7 +25,7 @@ const LotteryWheel = ({
   >("stopped");
   const [showElementsList, setShowElementsList] = useState(false);
 
-  // Reset des états quand le modal se ferme
+
   useEffect(() => {
     if (!isVisible) {
       setShowFinalResult(false);
@@ -35,17 +35,17 @@ const LotteryWheel = ({
     }
   }, [isVisible]);
 
-  // Gérer le scroll de la page en arrière-plan
+
   useEffect(() => {
     if (isVisible) {
-      // Désactiver le scroll
+
       document.body.style.overflow = "hidden";
     } else {
-      // Réactiver le scroll
+
       document.body.style.overflow = "unset";
     }
 
-    // Cleanup au démontage du composant
+
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -78,7 +78,7 @@ const LotteryWheel = ({
           clearInterval(slowSpinInterval);
           setAnimationPhase("stopped");
 
-          // Phase 3: Résultat final
+
           setTimeout(() => {
             if (result) {
               setSpinningItem(result.winner.name);
@@ -113,7 +113,7 @@ const LotteryWheel = ({
         <div className="absolute -inset-2 bg-gradient-to-r from-primary-600 via-accent-600 to-primary-600 rounded-2xl blur opacity-30 animate-pulse"></div>
 
         <div className="relative">
-          {/* Icône liste dans le coin - visible seulement quand le résultat final est affiché */}
+          {/* List Icon */}
           {result && showFinalResult && result.elements && (
             <button
               onClick={() => setShowElementsList(true)}
@@ -148,7 +148,7 @@ const LotteryWheel = ({
             <div className="w-20 h-1 bg-gradient-to-r from-primary-400 to-primary-600 mx-auto rounded-full"></div>
           </div>
 
-          {/* Zone d'affichage du résultat */}
+          {/* Result Display */}
           <div className="relative mb-8">
             {/* Background circle avec animation */}
             <div
@@ -180,7 +180,7 @@ const LotteryWheel = ({
                 </>
               )}
 
-              {/* Texte du résultat */}
+              {/* Result Text */}
               <div className="text-center px-4">
                 <div
                   className={`
@@ -247,7 +247,7 @@ const LotteryWheel = ({
         </div>
       </div>
 
-      {/* Modale pour afficher la liste des éléments */}
+      {/* Elements List Modal */}
       {showElementsList && result && result.elements && (
         <ElementsListModal
           isOpen={true}

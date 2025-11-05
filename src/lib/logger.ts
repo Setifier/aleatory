@@ -1,24 +1,11 @@
-/**
- * Système de logging centralisé
- * En développement : affiche dans la console
- * En production : peut être étendu pour envoyer vers un service de monitoring
- */
+import * as Sentry from "@sentry/react";
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
-
-// Interface pour les futures fonctionnalités de monitoring
-// interface LogEntry {
-//   level: LogLevel;
-//   message: string;
-//   data?: unknown;
-//   timestamp: Date;
-// }
 
 class Logger {
   private isDevelopment = import.meta.env.DEV;
 
   private log(level: LogLevel, message: string, data?: unknown): void {
-    // En développement, afficher dans la console
     if (this.isDevelopment) {
       const consoleMethod = level === 'error' ? console.error :
                            level === 'warn' ? console.warn :
@@ -32,9 +19,19 @@ class Logger {
       }
     }
 
-    // En production, on pourrait envoyer vers un service comme Sentry, LogRocket, etc.
-    // const entry: LogEntry = { level, message, data, timestamp: new Date() };
-    // this.sendToMonitoringService(entry);
+    if (!this.isDevelopment) {
+      if (level === 'error') {
+        Sentry.captureException(data instanceof Error ? data : new Error(message), {
+          level: 'error',
+          extra: { originalMessage: message, data }
+        });
+      } else if (level === 'warn') {
+        Sentry.captureMessage(message, {
+          level: 'warning',
+          extra: { data }
+        });
+      }
+    }
   }
 
   info(message: string, data?: unknown): void {
@@ -53,12 +50,10 @@ class Logger {
     this.log('debug', message, data);
   }
 
-  // Méthode spéciale pour les erreurs Supabase
   supabaseError(operation: string, error: unknown): void {
     this.error(`Erreur Supabase lors de: ${operation}`, error);
   }
 
-  // Méthode pour logger les actions utilisateur importantes
   userAction(action: string, userId?: string, data?: unknown): void {
     const logData = typeof data === 'object' && data !== null
       ? { userId, ...data }
@@ -67,10 +62,8 @@ class Logger {
   }
 }
 
-// Instance singleton
 export const logger = new Logger();
 
-// Helpers spécifiques
 export const logSupabaseError = (operation: string, error: unknown) =>
   logger.supabaseError(operation, error);
 

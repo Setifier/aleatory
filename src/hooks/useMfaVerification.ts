@@ -29,10 +29,9 @@ export const useMfaVerification = () => {
   };
 
   const handleCodeChange = (value: string) => {
-    // Nettoyer l'input : garder seulement les chiffres, max 6
     const cleanValue = value.replace(/\D/g, "").slice(0, 6);
     setCode(cleanValue);
-    if (error) clearError(); // Clear error when user starts typing
+    if (error) clearError();
   };
 
   const validateCode = () => {
@@ -48,12 +47,9 @@ export const useMfaVerification = () => {
   };
 
   return {
-    // State
     code,
     isLoading,
     error,
-    
-    // Actions
     setCode,
     setError,
     setLoading,
@@ -61,8 +57,6 @@ export const useMfaVerification = () => {
     reset,
     handleCodeChange,
     validateCode,
-    
-    // Computed
     isCodeValid: code.length === 6,
   };
 };

@@ -50,7 +50,7 @@ const ProfileSection = ({ onEmailChangeRequested }: ProfileSectionProps) => {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { pseudo: validation.formatted }
+        data: { pseudo: validation.formatted },
       });
 
       if (error) {
@@ -95,7 +95,7 @@ const ProfileSection = ({ onEmailChangeRequested }: ProfileSectionProps) => {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        email: validation.formatted
+        email: validation.formatted,
       });
 
       if (error) {
@@ -107,11 +107,10 @@ const ProfileSection = ({ onEmailChangeRequested }: ProfileSectionProps) => {
       setEmailValue("");
       setEmailError("");
 
-      // Notifier le parent du changement d'email
       const pendingData = {
         oldEmail: currentEmail,
         newEmail: validation.formatted,
-        expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 heures
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 heures
       };
       onEmailChangeRequested(pendingData);
     } catch {
@@ -119,12 +118,15 @@ const ProfileSection = ({ onEmailChangeRequested }: ProfileSectionProps) => {
     }
   };
 
-  const currentPseudo = auth?.session?.user?.user_metadata?.pseudo || "Non défini";
+  const currentPseudo =
+    auth?.session?.user?.user_metadata?.pseudo || "Non défini";
   const currentEmail = auth?.session?.user?.email || "Non défini";
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Profil</h2>
+    <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">
+        Profil
+      </h2>
 
       {/* Pseudo Section */}
       <div className="mb-6">
@@ -155,20 +157,22 @@ const ProfileSection = ({ onEmailChangeRequested }: ProfileSectionProps) => {
             <div className="flex gap-2">
               <button
                 onClick={handleSavePseudo}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
               >
                 Sauvegarder
               </button>
               <button
                 onClick={handleCancelEditPseudo}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm"
               >
                 Annuler
               </button>
             </div>
           </div>
         ) : (
-          <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{currentPseudo}</p>
+          <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">
+            {currentPseudo}
+          </p>
         )}
       </div>
 
@@ -195,26 +199,26 @@ const ProfileSection = ({ onEmailChangeRequested }: ProfileSectionProps) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Votre email"
             />
-            {emailError && (
-              <p className="text-red-600 text-sm">{emailError}</p>
-            )}
+            {emailError && <p className="text-red-600 text-sm">{emailError}</p>}
             <div className="flex gap-2">
               <button
                 onClick={handleSaveEmail}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
               >
                 Sauvegarder
               </button>
               <button
                 onClick={handleCancelEditEmail}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm"
               >
                 Annuler
               </button>
             </div>
           </div>
         ) : (
-          <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{currentEmail}</p>
+          <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">
+            {currentEmail}
+          </p>
         )}
       </div>
     </div>

@@ -38,7 +38,7 @@ const MfaVerificationModal = ({
     setLoading(true);
 
     try {
-      // Import dynamique pour éviter les dépendances circulaires
+
       const { supabase } = await import("../../lib/supabaseClient");
       
       // Lister les facteurs MFA
@@ -49,7 +49,7 @@ const MfaVerificationModal = ({
 
       const factor = factors.all[0];
 
-      // Créer un challenge MFA
+
       const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
         factorId: factor.id
       });
@@ -58,7 +58,7 @@ const MfaVerificationModal = ({
         throw new Error(challengeError?.message || "Impossible de créer le défi MFA");
       }
 
-      // Vérifier le code
+
       const { error: verifyError } = await supabase.auth.mfa.verify({
         factorId: factor.id,
         challengeId: challenge.id,
@@ -69,7 +69,7 @@ const MfaVerificationModal = ({
         throw new Error(verifyError.message || "Code invalide");
       }
 
-      // Succès
+
       onSuccess();
       handleClose();
       

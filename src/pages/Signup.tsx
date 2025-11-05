@@ -31,7 +31,6 @@ const Signup = () => {
     e.preventDefault();
     setError("");
 
-    // Validation du pseudo
     const pseudoValidation = formatAndValidatePseudo(pseudo);
     if (!pseudoValidation.isValid) {
       setError(pseudoValidation.error || "Pseudo invalide");
@@ -49,21 +48,17 @@ const Signup = () => {
     }
     setLoading(true);
     try {
-      // Utilise le pseudo formaté
       const formattedPseudo = pseudoValidation.formatted;
       const result = await signUpNewUser(email, password, formattedPseudo);
       if (result.success) {
         if (result.needsEmailConfirmation) {
-          // Email de confirmation nécessaire
-          setError(""); // Pas d'erreur, juste un message informatif
+          setError("");
           setConfirmationEmail(email);
           setShowEmailConfirmDialog(true);
         } else {
-          // Inscription directe (si confirmation désactivée)
           navigate("/");
         }
       } else if (result.isUserAlreadyExists) {
-        // Compte existant - afficher la modale
         setShowAccountExistsModal(true);
       } else {
         setError(
@@ -78,10 +73,10 @@ const Signup = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg border border-secondary-200">
+    <div className="flex items-center justify-center min-h-[calc(100vh-200px)] px-4">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8 p-6 sm:p-8 bg-white rounded-lg shadow-lg border border-secondary-200">
         <div className="flex justify-between items-center">
-          <h2 className="mt-6 text-center text-3xl font-bold text-accent-900">
+          <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-bold text-accent-900">
             Créer un compte
           </h2>
         </div>
@@ -266,7 +261,6 @@ const Signup = () => {
           </p>
         </div>
 
-        {/* Dialog Email de confirmation */}
         <ConfirmModal
           isOpen={showEmailConfirmDialog}
           title="Email de confirmation envoyé"
@@ -286,7 +280,6 @@ const Signup = () => {
           advancedA11y={true}
         />
 
-        {/* Modale compte existant */}
         {showAccountExistsModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">

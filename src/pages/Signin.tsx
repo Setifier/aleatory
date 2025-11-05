@@ -24,10 +24,8 @@ const Signin = () => {
   const auth = UserAuth();
   const navigate = useNavigate();
 
-  // Ref pour stocker le timeout du auto-submit MFA
   const mfaAutoSubmitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Vérifier si on vient d'un reset de mot de passe réussi ou d'un forgot password
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
 
@@ -37,34 +35,27 @@ const Signin = () => {
         "Mot de passe mis à jour avec succès ! Vous pouvez maintenant vous connecter."
       );
 
-      // Faire disparaître le message après 10 secondes
       timeoutId = setTimeout(() => {
         setSuccessMessage("");
       }, 10000);
     }
 
-    // Vérifier si on vient de ForgotPassword avec un message
     const stateMessage = location.state?.message;
     if (stateMessage) {
       setSuccessMessage(stateMessage);
-      // Nettoyer l'état pour éviter que le message persiste
       window.history.replaceState({}, "", window.location.pathname);
 
-      // Faire disparaître le message après 10 secondes
-      // Note: Si les deux conditions sont vraies, on garde le dernier timeout
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         setSuccessMessage("");
       }, 10000);
     }
 
-    // Cleanup: annuler le timeout si le composant se démonte avant la fin
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [searchParams, location.state]);
 
-  // Cleanup du timeout MFA au démontage du composant
   useEffect(() => {
     return () => {
       if (mfaAutoSubmitTimeoutRef.current) {
@@ -73,9 +64,8 @@ const Signin = () => {
     };
   }, []);
 
-  // On vérifie que le contexte d'authentification est disponible
   if (!auth) {
-    return null; // Si le contexte n'est pas disponible, on ne rend rien
+    return null;
   }
   const { signInUser, verifyMfaAndSignIn } = auth;
 
@@ -89,11 +79,9 @@ const Signin = () => {
       if (result.success) {
         navigate("/");
       } else if (result.requiresMfa) {
-        // MFA requis - passer à l'étape de saisie du code
         setShowMfaStep(true);
-        setError(""); // Pas d'erreur, juste MFA requis
-        // Empêcher toute redirection automatique
-        return; // Important : sortir ici
+        setError("");
+        return;
       } else {
         setError(
           result.error ? getErrorMessage(result.error) : "Erreur de connexion"
@@ -128,16 +116,15 @@ const Signin = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg border border-secondary-200">
+    <div className="flex items-center justify-center min-h-[calc(100vh-200px)] px-4">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8 p-6 sm:p-8 bg-white rounded-lg shadow-lg border border-secondary-200">
         <div className="flex justify-between items-center">
-          <h2 className="mt-6 text-center text-3xl font-bold text-accent-900">
+          <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-bold text-accent-900">
             {showMfaStep ? "Code d'authentification" : "Se connecter"}
           </h2>
         </div>
 
         {showMfaStep ? (
-          // Interface MFA
           <form className="mt-8 space-y-6" onSubmit={handleMfaSubmit}>
             {error && (
               <div className="text-red-700 text-sm text-center bg-red-100 border-2 border-red-300 px-4 py-3 rounded-lg font-medium shadow-sm">
@@ -146,7 +133,7 @@ const Signin = () => {
             )}
 
             <div className="text-center mb-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Entrez le code à 6 chiffres de votre app d'authentification
               </p>
               <p className="text-xs text-gray-500 mt-1">
@@ -163,13 +150,11 @@ const Signin = () => {
                   const value = e.target.value.replace(/\D/g, "").slice(0, 6);
                   setMfaCode(value);
 
-                  // Annuler tout timeout précédent pour éviter les race conditions
                   if (mfaAutoSubmitTimeoutRef.current) {
                     clearTimeout(mfaAutoSubmitTimeoutRef.current);
                     mfaAutoSubmitTimeoutRef.current = null;
                   }
 
-                  // Auto-soumission dès que 6 chiffres sont saisis
                   if (value.length === 6 && !loading) {
                     mfaAutoSubmitTimeoutRef.current = setTimeout(async () => {
                       setError("");
@@ -194,7 +179,7 @@ const Signin = () => {
                     }, 200);
                   }
                 }}
-                className="w-full text-center text-2xl tracking-widest border border-gray-300 rounded-md px-3 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full text-center text-xl sm:text-2xl tracking-widest border border-gray-300 rounded-md px-3 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 maxLength={6}
                 required
               />
@@ -222,7 +207,6 @@ const Signin = () => {
             </div>
           </form>
         ) : (
-          // Interface de connexion normale
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="text-red-700 text-sm text-center bg-red-100 border-2 border-red-300 px-4 py-3 rounded-lg font-medium shadow-sm">

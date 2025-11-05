@@ -104,28 +104,28 @@ const ItemsLibrary = ({
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-secondary-50 rounded-xl p-4 border border-secondary-200 shadow-md">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-3 h-3 bg-primary-700 rounded-full animate-pulse"></div>
-        <h3 className="text-xl font-semibold text-accent-800">Bibliothèque</h3>
+    <div className="bg-gradient-to-br from-white to-secondary-50 rounded-xl p-3 sm:p-4 border border-secondary-200 shadow-md">
+      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-primary-700 rounded-full animate-pulse"></div>
+        <h3 className="text-base sm:text-lg md:text-xl font-semibold text-accent-800">Bibliothèque</h3>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4 border-b border-secondary-200">
+      <div className="flex gap-1 sm:gap-2 mb-3 sm:mb-4 border-b border-secondary-200">
         <button
           onClick={() =>
             setActiveTab(activeTab === "folders" ? null : "folders")
           }
-          className={`flex items-center gap-2 px-4 py-2 font-medium transition-all duration-200 border-b-2 ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium transition-all duration-200 border-b-2 ${
             activeTab === "folders"
               ? "border-primary-500 text-primary-600"
               : "border-transparent text-accent-600 hover:text-accent-800"
           }`}
         >
-          <span>📁</span>
+          <span className="text-sm sm:text-base">📁</span>
           <span>Dossiers</span>
           <span
-            className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+            className={`px-1.5 sm:px-2 py-0.5 rounded-full text-xs transition-colors ${
               activeTab === "folders"
                 ? "bg-primary-100 text-primary-700"
                 : "bg-accent-100 text-accent-700"
@@ -137,16 +137,16 @@ const ItemsLibrary = ({
 
         <button
           onClick={() => setActiveTab(activeTab === "items" ? null : "items")}
-          className={`flex items-center gap-2 px-4 py-2 font-medium transition-all duration-200 border-b-2 ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium transition-all duration-200 border-b-2 ${
             activeTab === "items"
               ? "border-primary-500 text-primary-600"
               : "border-transparent text-accent-600 hover:text-accent-800"
           }`}
         >
-          <span>💾</span>
+          <span className="text-sm sm:text-base">💾</span>
           <span>Éléments</span>
           <span
-            className={`px-2 py-0.5 rounded-full text-xs transition-colors ${
+            className={`px-1.5 sm:px-2 py-0.5 rounded-full text-xs transition-colors ${
               activeTab === "items"
                 ? "bg-primary-100 text-primary-700"
                 : "bg-accent-100 text-accent-700"
@@ -171,8 +171,8 @@ const ItemsLibrary = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-accent-800">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-sm sm:text-base font-semibold text-accent-800">
                   {searchTerm
                     ? `Résultats pour "${searchTerm}"`
                     : "Tous les dossiers"}
@@ -180,8 +180,10 @@ const ItemsLibrary = ({
                 <button
                   onClick={() => setShowCreateFolderForm(!showCreateFolderForm)}
                   className="text-primary-500 hover:text-primary-700 text-sm font-medium"
+                  title="Nouveau dossier"
                 >
-                  ➕ Nouveau dossier
+                  <span className="sm:hidden">➕</span>
+                  <span className="hidden sm:inline">➕ Nouveau dossier</span>
                 </button>
               </div>
 
@@ -245,8 +247,8 @@ const ItemsLibrary = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-accent-800">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-sm sm:text-base font-semibold text-accent-800">
                   {searchTerm
                     ? `Résultats pour "${searchTerm}"`
                     : "Tous les éléments"}
@@ -254,8 +256,10 @@ const ItemsLibrary = ({
                 <button
                   onClick={() => setShowAddItemForm(!showAddItemForm)}
                   className="text-primary-500 hover:text-primary-700 text-sm font-medium"
+                  title="Nouvel élément"
                 >
-                  ➕ Nouvel élément
+                  <span className="sm:hidden">➕</span>
+                  <span className="hidden sm:inline">➕ Nouvel élément</span>
                 </button>
               </div>
 
@@ -264,7 +268,7 @@ const ItemsLibrary = ({
                   onAddItem={async (itemName) => {
                     const success = await onSaveItem(itemName);
                     if (success) {
-                      onRefreshItems(); // ✅ Rafraîchir pour récupérer les vrais IDs
+                      onRefreshItems();
                     }
                     return success;
                   }}

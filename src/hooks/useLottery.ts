@@ -12,12 +12,12 @@ export interface LotteryItem {
 }
 
 export interface LotteryResult {
-  id?: string; // ID en base pour les résultats sauvés
+  id?: string;
   title?: string; // Titre optionnel du tirage
   winner: LotteryItem;
-  elements: LotteryItem[]; // Liste complète des éléments
+  elements: LotteryItem[];
   timestamp: Date;
-  participantsCount: number; // Alias pour elementsCount (compatibilité)
+  participantsCount: number;
 }
 
 export const useLottery = (isAuthenticated: boolean = false) => {
@@ -30,7 +30,6 @@ export const useLottery = (isAuthenticated: boolean = false) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Transformer une entrée d'historique en LotteryResult pour compatibilité
   const transformHistoryEntry = (
     entry: LotteryHistoryEntry
   ): LotteryResult => ({
@@ -42,10 +41,9 @@ export const useLottery = (isAuthenticated: boolean = false) => {
     participantsCount: entry.elementsCount,
   });
 
-  // Charger l'historique depuis la base de données
   const loadHistory = useCallback(async () => {
     if (!isAuthenticated) {
-      return; // L'historique local est géré ailleurs
+      return;
     }
 
     setIsLoadingHistory(true);
@@ -74,7 +72,6 @@ export const useLottery = (isAuthenticated: boolean = false) => {
     let errorMessage = "";
 
     setItems((prev) => {
-      // Vérifier les doublons dans le callback
       if (
         prev.some(
           (item) => item.name.toLowerCase() === trimmedName.toLowerCase()
@@ -107,22 +104,18 @@ export const useLottery = (isAuthenticated: boolean = false) => {
     setItems((prev) => prev.filter((item) => item.id !== itemId));
   }, []);
 
-  // ✅ NOUVELLE FONCTION : Toggle item (ajouter ou retirer sans erreur)
   const toggleItem = useCallback((name: string, isFromSaved = false) => {
     const trimmedName = name.trim();
     if (!trimmedName) return false;
 
     setItems((prev) => {
-      // Chercher si l'item existe déjà
       const existingItem = prev.find(
         (item) => item.name.toLowerCase() === trimmedName.toLowerCase()
       );
 
       if (existingItem) {
-        // Item existe → le retirer
         return prev.filter((item) => item.id !== existingItem.id);
       } else {
-        // Item n'existe pas → l'ajouter
         const newItem: LotteryItem = {
           id: crypto.randomUUID(),
           name: trimmedName,
@@ -132,7 +125,7 @@ export const useLottery = (isAuthenticated: boolean = false) => {
       }
     });
 
-    setError(null); // Toujours clear l'erreur
+    setError(null);
     return true;
   }, []);
 
@@ -243,18 +236,15 @@ export const useLottery = (isAuthenticated: boolean = false) => {
   );
 
   return {
-    // État
     items,
     currentResult,
     history,
     isDrawing,
     isLoadingHistory,
     error,
-
-    // Actions
     addItem,
     removeItem,
-    toggleItem, // ✅ Ajouté ici
+    toggleItem,
     drawLottery,
     clearItems,
     clearError,

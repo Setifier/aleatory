@@ -47,8 +47,8 @@ const CreateFolderForm = ({
         <Button
           onClick={handleCreate}
           disabled={isCreating || !newFolderName.trim()}
-          className="w-full py-2 text-sm"
-          label={isCreating ? "⏳ Création en cours..." : "Créer"}
+          className="w-full py-1.5 sm:py-2 text-sm"
+          label={isCreating ? "⏳ Création..." : "Créer"}
         ></Button>
 
         <button

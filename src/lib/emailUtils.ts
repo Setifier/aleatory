@@ -7,15 +7,10 @@ interface EmailValidationResult {
 export const formatAndValidateEmail = (
   input: string
 ): EmailValidationResult => {
-  // 1. Trim les espaces en début/fin
   const trimmed = input.trim();
-
-  // 2. Convertir en minuscules (standard pour les emails)
   const formatted = trimmed.toLowerCase();
-
-  // 3. Validation de base de l'email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
+
   if (!emailRegex.test(formatted)) {
     return {
       isValid: false,
@@ -24,7 +19,6 @@ export const formatAndValidateEmail = (
     };
   }
 
-  // 4. Validations supplémentaires
   if (formatted.length < 5) {
     return {
       isValid: false,

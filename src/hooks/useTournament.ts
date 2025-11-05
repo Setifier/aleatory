@@ -24,9 +24,6 @@ export const useTournament = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Load user's tournaments
-   */
   const loadTournaments = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -42,9 +39,6 @@ export const useTournament = () => {
     setLoading(false);
   }, []);
 
-  /**
-   * Load specific tournament with matches
-   */
   const loadTournament = useCallback(async (tournamentId: string) => {
     setLoading(true);
     setError(null);
@@ -69,15 +63,11 @@ export const useTournament = () => {
     setLoading(false);
   }, []);
 
-  /**
-   * Create new tournament with matches
-   */
   const createNewTournament = useCallback(
     async (form: TournamentCreationForm) => {
       setLoading(true);
       setError(null);
 
-      // Step 1: Create tournament
       const tournamentResult = await createTournament(form);
 
       if (!tournamentResult.success || !tournamentResult.tournament) {
@@ -87,11 +77,7 @@ export const useTournament = () => {
       }
 
       const tournament = tournamentResult.tournament;
-
-      // Step 2: Generate matches
       const matches = generateTournament(tournament.id, form);
-
-      // Step 3: Save matches to database
       const matchesResult = await createTournamentMatches(
         tournament.id,
         matches
@@ -103,7 +89,6 @@ export const useTournament = () => {
         return { success: false, error: matchesResult.error };
       }
 
-      // Step 4: Update status to active
       await updateTournamentStatus(tournament.id, "active");
 
       setLoading(false);
@@ -112,9 +97,6 @@ export const useTournament = () => {
     []
   );
 
-  /**
-   * Delete tournament
-   */
   const removeTournament = useCallback(async (tournamentId: string) => {
     setLoading(true);
     setError(null);

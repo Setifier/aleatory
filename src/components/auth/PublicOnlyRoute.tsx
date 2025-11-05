@@ -8,7 +8,7 @@ interface PublicOnlyRouteProps {
 const PublicOnlyRoute = ({ children }: PublicOnlyRouteProps) => {
   const { session } = UserAuth();
 
-  // Si connecté, rediriger vers la home
+
   if (session) {
     return <Navigate to="/" replace />;
   }

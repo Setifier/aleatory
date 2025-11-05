@@ -7,7 +7,7 @@ export interface LotteryHistoryEntry {
   id?: string;
   title?: string;
   winner: LotteryItem;
-  elements: LotteryItem[]; // Liste complète des éléments
+  elements: LotteryItem[];
   elementsCount: number;
   timestamp: Date;
   userId?: string;
@@ -24,9 +24,6 @@ export interface DatabaseLotteryEntry {
   created_at: string;
 }
 
-/**
- * Génère un titre par défaut au format "Tirage du 16 Sept. 2025"
- */
 export const generateDefaultTitle = (date: Date): string => {
   const months = [
     "Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin",
@@ -40,9 +37,6 @@ export const generateDefaultTitle = (date: Date): string => {
   return `Tirage du ${day} ${month} ${year}`;
 };
 
-/**
- * Transforme une entrée de base vers le format application
- */
 const transformFromDatabase = (entry: DatabaseLotteryEntry): LotteryHistoryEntry => ({
   id: entry.id,
   title: entry.title || generateDefaultTitle(new Date(entry.created_at)),
@@ -57,13 +51,7 @@ const transformFromDatabase = (entry: DatabaseLotteryEntry): LotteryHistoryEntry
   userId: entry.user_id
 });
 
-/**
- * Service pour gérer l'historique des tirages
- */
 export class LotteryHistoryService {
-  /**
-   * Sauvegarder un tirage en base de données
-   */
   static async saveLotteryResult(
     winner: LotteryItem,
     elements: LotteryItem[],
@@ -118,9 +106,6 @@ export class LotteryHistoryService {
     }
   }
 
-  /**
-   * Récupérer l'historique des tirages (50 derniers)
-   */
   static async getLotteryHistory(): Promise<LotteryHistoryEntry[]> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -157,9 +142,6 @@ export class LotteryHistoryService {
     }
   }
 
-  /**
-   * Supprimer un tirage de l'historique
-   */
   static async deleteLotteryEntry(entryId: string): Promise<boolean> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -173,7 +155,7 @@ export class LotteryHistoryService {
         .from("lottery_history")
         .delete()
         .eq("id", entryId)
-        .eq("user_id", user.id); // Sécurité supplémentaire
+        .eq("user_id", user.id);
 
       if (error) {
         logSupabaseError("suppression entrée historique", error);
@@ -196,9 +178,6 @@ export class LotteryHistoryService {
     }
   }
 
-  /**
-   * Vider complètement l'historique
-   */
   static async clearLotteryHistory(): Promise<boolean> {
     try {
       const { data: { user } } = await supabase.auth.getUser();

@@ -14,7 +14,6 @@ export const useFolders = () => {
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [loadingFolders, setLoadingFolders] = useState(false);
 
-  // Charger les dossiers
   const loadFolders = useCallback(async () => {
     if (!auth?.session) return;
 
@@ -24,7 +23,6 @@ export const useFolders = () => {
     setLoadingFolders(false);
   }, [auth?.session]);
 
-  // Créer un dossier
   const handleCreateFolder = useCallback(
     async (folderName: string) => {
       if (!auth?.session) return;
@@ -37,7 +35,6 @@ export const useFolders = () => {
     [auth?.session, loadFolders]
   );
 
-  // Supprimer un dossier
   const handleDeleteFolder = useCallback(
     async (folderName: string) => {
       if (!auth?.session) return;
@@ -52,7 +49,6 @@ export const useFolders = () => {
     [auth?.session]
   );
 
-  // Ajouter tous les items d'un dossier au tirage
   const handleAddFolder = useCallback(
     async (folderId: number): Promise<string[]> => {
       if (!auth?.session) return [];
@@ -66,7 +62,6 @@ export const useFolders = () => {
     [auth?.session]
   );
 
-  // Charger au montage et quand session change
   useEffect(() => {
     if (auth?.session) {
       loadFolders();
@@ -80,7 +75,7 @@ export const useFolders = () => {
     loadingFolders,
     handleCreateFolder,
     handleDeleteFolder,
-    handleAddFolder, // ✅ Nouvelle fonction
+    handleAddFolder,
     loadFolders,
   };
 };

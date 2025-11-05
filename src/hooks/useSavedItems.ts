@@ -15,7 +15,6 @@ export const useSavedItems = () => {
   const [loadingSavedItems, setLoadingSavedItems] = useState(false);
   const [savingItems, setSavingItems] = useState<Set<string>>(new Set());
 
-  // Charger les items sauvegardés
   const loadSavedItems = useCallback(async () => {
     if (!auth?.session) return;
 
@@ -26,7 +25,6 @@ export const useSavedItems = () => {
     setLoadingSavedItems(false);
   }, [auth?.session]);
 
-  // Sauvegarder un item
   const handleSaveItem = useCallback(
     async (itemName: string): Promise<boolean> => {
       if (!auth?.session || savingItems.has(itemName)) return false;
@@ -59,7 +57,6 @@ export const useSavedItems = () => {
     [auth?.session, savingItems]
   );
 
-  // Supprimer un item sauvegardé
   const handleDeleteSavedItem = useCallback(
     async (itemName: string) => {
       if (!auth?.session) return;
@@ -79,7 +76,6 @@ export const useSavedItems = () => {
     [auth?.session]
   );
 
-  // Charger au montage et quand session change
   useEffect(() => {
     if (auth?.session) {
       loadSavedItems();
@@ -96,6 +92,6 @@ export const useSavedItems = () => {
     savingItems,
     handleSaveItem,
     handleDeleteSavedItem,
-    loadSavedItems, // ✅ Exposé pour synchronisation
+    loadSavedItems,
   };
 };

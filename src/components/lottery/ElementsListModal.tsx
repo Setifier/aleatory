@@ -16,17 +16,13 @@ const ElementsListModal = ({
   title,
   onClose,
 }: ElementsListModalProps) => {
-  // Gérer le scroll de la page en arrière-plan
   useEffect(() => {
     if (isOpen) {
-      // Désactiver le scroll
       document.body.style.overflow = 'hidden';
     } else {
-      // Réactiver le scroll
       document.body.style.overflow = 'unset';
     }
 
-    // Cleanup au démontage du composant
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -34,7 +30,6 @@ const ElementsListModal = ({
 
   if (!isOpen) return null;
 
-  // Fallback si les éléments ne sont pas disponibles (anciens résultats)
   if (!elements || elements.length === 0) {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -62,7 +57,6 @@ const ElementsListModal = ({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="relative bg-white rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-hidden border border-secondary-200 shadow-2xl">
 
-        {/* Header */}
         <div className="mb-4">
           <h3 className="text-xl font-bold text-accent-800 mb-1">
             {title || "Liste des éléments"}
@@ -72,7 +66,6 @@ const ElementsListModal = ({
           </p>
         </div>
 
-        {/* Liste des éléments */}
         <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
           {elements.map((element, index) => {
             const isWinner = element.name === winner.name;
@@ -89,7 +82,6 @@ const ElementsListModal = ({
                 `}
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {/* Numéro */}
                   <div
                     className={`
                       w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
@@ -102,7 +94,6 @@ const ElementsListModal = ({
                     {index + 1}
                   </div>
 
-                  {/* Nom de l'élément */}
                   <span
                     className={`
                       font-medium truncate
@@ -113,9 +104,7 @@ const ElementsListModal = ({
                   </span>
                 </div>
 
-                {/* Indicateurs */}
                 <div className="flex items-center gap-2 ml-2">
-                  {/* Badge gagnant */}
                   {isWinner && (
                     <div className="flex items-center gap-1">
                       <span className="text-lg">🏆</span>
@@ -130,7 +119,6 @@ const ElementsListModal = ({
           })}
         </div>
 
-        {/* Footer */}
         <div className="mt-6 pt-4 border-t border-secondary-200">
           <div className="text-center">
             <button

@@ -66,8 +66,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     if (error) {
-      console.error("Erreur lors de la création de l'utilisateur:", error);
-
       // Capture Sentry
       Sentry.captureException(error, {
         tags: {
@@ -112,8 +110,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        console.error("Erreur lors de la connexion:", error);
-
         Sentry.captureException(error, {
           tags: {
             action: "signin",
@@ -128,10 +124,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
       }
 
-      // Vérifier d'abord si l'utilisateur a des facteurs MFA
+
       const { data: factors } = await supabase.auth.mfa.listFactors();
 
-      // Si l'utilisateur a des facteurs MFA ET que MFA est activé dans les préférences
+
       if (
         factors?.all &&
         factors.all.length > 0 &&
@@ -143,13 +139,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (aal !== "aal2") {
           const factor = factors.all[0];
 
-          // IMPORTANT: Créer le challenge AVANT de se déconnecter
+
           const { data: challenge } = await supabase.auth.mfa.challenge({
             factorId: factor.id,
           });
 
           if (challenge) {
-            // Marquer MFA comme requis AVANT de définir le challenge
+
             setIsMfaRequired(true);
 
             setMfaChallenge({
@@ -162,8 +158,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               requiresMfa: true,
               message: "Code d'authentification requis",
             };
-          } else {
-            console.error("Impossible de créer le challenge MFA");
           }
         }
       }
@@ -196,8 +190,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return { success: true, data };
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
-
       Sentry.captureException(error, {
         tags: {
           action: "signin",
@@ -210,7 +202,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Vérifier le code MFA et finaliser la connexion
+
   const verifyMfaAndSignIn = async (code: string) => {
     if (!mfaChallenge) {
       return { success: false, error: "Aucun défi MFA en cours" };
@@ -224,8 +216,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        console.error("Erreur vérification MFA:", error);
-
         Sentry.captureException(error, {
           tags: {
             action: "mfa_verify",
@@ -239,14 +229,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
       }
 
-      // Réinitialiser le challenge MFA et l'état
+
       setMfaChallenge(null);
       setIsMfaRequired(false);
 
       return { success: true, data };
     } catch (error) {
-      console.error("Erreur lors de la vérification MFA:", error);
-
       Sentry.captureException(error, {
         tags: {
           action: "mfa_verify",
@@ -279,8 +267,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error("Erreur lors de la déconnexion:", error);
-
         Sentry.captureException(error, {
           tags: { action: "signout" },
         });
@@ -292,8 +278,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       return { success: true };
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
-
       Sentry.captureException(error, {
         tags: { action: "signout", error_type: "unexpected" },
       });
@@ -312,12 +296,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { success: false, error: "Utilisateur non connecté" };
       }
 
-      // Vérifier si l'utilisateur a des facteurs MFA ET si MFA est activé dans les préférences
+
       const { data: factors } = await supabase.auth.mfa.listFactors();
       const hasMfa = factors?.all && factors.all.length > 0;
       const isMfaEnabledByUser = isMfaEnabledInPreferences();
 
-      // Si MFA activé ET préférence utilisateur MFA activée, vérifier le niveau AAL
+
       if (
         hasMfa &&
         isMfaEnabledByUser &&
@@ -331,21 +315,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
       }
 
-      // D'abord, vérifier le mot de passe actuel
-      // On ne peut pas utiliser signInWithPassword car cela créerait une nouvelle session
-      // On va plutôt faire une vérification différente si nécessaire
 
-      // Tenter la mise à jour directement
+
+
+
+
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
 
       if (updateError) {
-        console.error(
-          "Erreur lors de la mise à jour du mot de passe:",
-          updateError
-        );
-
         Sentry.captureException(updateError, {
           tags: {
             action: "update_password",
@@ -353,7 +332,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           },
         });
 
-        // Si erreur liée à la vérification du mot de passe actuel
+
         if (updateError.message?.includes("invalid")) {
           return { success: false, error: "Mot de passe actuel incorrect" };
         }
@@ -366,8 +345,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return { success: true };
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du mot de passe:", error);
-
       Sentry.captureException(error, {
         tags: { action: "update_password", error_type: "unexpected" },
       });

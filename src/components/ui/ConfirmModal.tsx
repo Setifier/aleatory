@@ -91,7 +91,7 @@ const ConfirmModal = ({
           <p className="text-accent-700 mb-6 text-lg">{message}</p>
 
           {/* Buttons */}
-          <div className="flex gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
             <Button
               onClick={onCancel}
               label={cancelLabel}

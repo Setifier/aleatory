@@ -10,7 +10,7 @@ interface DropdownMenuItem {
 interface DropdownMenuProps {
   items: DropdownMenuItem[];
   triggerIcon?: string;
-  alignment?: "left" | "right"; // ✅ Renommé pour éviter confusion
+  alignment?: "left" | "right";
 }
 
 const DropdownMenu = ({
@@ -19,9 +19,9 @@ const DropdownMenu = ({
   alignment = "right",
 }: DropdownMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // ✅ Position dynamique
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null); // ✅ Ref pour le bouton
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Close on click outside
   useEffect(() => {
@@ -52,18 +52,16 @@ const DropdownMenu = ({
 
   return (
     <div ref={menuRef}>
-      {/* Trigger button */}
       <button
         ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
 
-          // ✅ Calculer la position du menu
           const rect = e.currentTarget.getBoundingClientRect();
-          const menuWidth = 160; // w-40 = 10rem = 160px
+          const menuWidth = 160;
 
           setMenuPosition({
-            top: rect.bottom + 4, // 4px de marge
+            top: rect.bottom + 4,
             left: alignment === "right" ? rect.right - menuWidth : rect.left,
           });
 
@@ -75,7 +73,6 @@ const DropdownMenu = ({
         <span className="text-lg font-bold">{triggerIcon}</span>
       </button>
 
-      {/* Dropdown menu */}
       {isOpen && (
         <div
           className="fixed w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] overflow-hidden"

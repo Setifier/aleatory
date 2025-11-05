@@ -2,8 +2,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 
 interface ErrorMessageProps {
   message: string | null;
-  duration?: number; // Durée en millisecondes avant disparition automatique
-  onDismiss?: () => void; // Callback quand l'erreur est supprimée
+  duration?: number;
+  onDismiss?: () => void;
 }
 
 const ErrorMessage = ({
@@ -15,9 +15,7 @@ const ErrorMessage = ({
   const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const dismissTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fonction pour fermer le message avec nettoyage des timers
   const handleClose = useCallback(() => {
-    // Nettoyer les timers existants
     if (hideTimerRef.current) {
       clearTimeout(hideTimerRef.current);
     }
@@ -26,15 +24,13 @@ const ErrorMessage = ({
     }
 
     setIsVisible(false);
-    
-    // Timer pour appeler onDismiss après l'animation de sortie
+
     dismissTimerRef.current = setTimeout(() => {
       onDismiss?.();
     }, 300);
   }, [onDismiss]);
 
   useEffect(() => {
-    // Nettoyer les timers existants
     if (hideTimerRef.current) {
       clearTimeout(hideTimerRef.current);
     }
@@ -45,7 +41,6 @@ const ErrorMessage = ({
     if (message) {
       setIsVisible(true);
 
-      // Timer pour auto-fermeture
       hideTimerRef.current = setTimeout(() => {
         handleClose();
       }, duration);
@@ -53,7 +48,6 @@ const ErrorMessage = ({
       setIsVisible(false);
     }
 
-    // Cleanup function
     return () => {
       if (hideTimerRef.current) {
         clearTimeout(hideTimerRef.current);
@@ -64,7 +58,6 @@ const ErrorMessage = ({
     };
   }, [message, duration, handleClose]);
 
-  // Ne rien afficher si pas de message
   if (!message) return null;
 
   return (
@@ -77,7 +70,6 @@ const ErrorMessage = ({
     >
       <div className="bg-red-100 border-2 border-red-300 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center justify-between shadow-md">
         <div className="flex items-center">
-          {/* Icône d'erreur */}
           <svg
             className="w-5 h-5 mr-2 flex-shrink-0"
             fill="currentColor"
@@ -93,7 +85,6 @@ const ErrorMessage = ({
           <span className="text-sm font-medium">{message}</span>
         </div>
 
-        {/* Bouton pour fermer manuellement */}
         <button
           onClick={handleClose}
           className="ml-4 text-red-400 hover:text-red-600 transition-colors duration-200"

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LotteryResult } from "../../hooks/useLottery";
-import Button from "../ui/Button";
 import ElementsListModal from "./ElementsListModal";
 import ConfirmModal from "../ui/ConfirmModal";
 
@@ -28,24 +27,27 @@ const LotteryHistory = ({
 
   return (
     <>
-      <div className="bg-gradient-to-br from-secondary-50 to-white rounded-xl p-6 border-2 border-secondary-200 shadow-lg">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-secondary-400 rounded-full animate-pulse"></div>
-            <h3 className="text-xl font-semibold text-accent-800">
+      <div className="bg-gradient-to-br from-secondary-50 to-white rounded-xl p-4 sm:p-6 border-2 border-secondary-200 shadow-lg">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-secondary-400 rounded-full animate-pulse"></div>
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-accent-800">
               🕒 Historique des tirages
             </h3>
-            <span className="bg-accent-100 text-accent-700 px-2 py-1 rounded-full text-sm font-medium">
+            <span className="bg-accent-100 text-accent-700 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs sm:text-sm font-medium">
               {history.length}
             </span>
           </div>
 
           {onClear && (
-            <Button
-              onClick={() => setShowClearConfirm(true)} // ✅ Ouvre modal
-              label="🗑️ Vider"
-              className="bg-gray-400 hover:bg-gray-500 text-white text-sm px-3 py-1"
-            />
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="bg-gray-400 hover:bg-gray-500 text-white text-base sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-1 rounded-xl sm:rounded-md transition-colors"
+              title="Vider l'historique"
+            >
+              <span className="sm:hidden">🗑️</span>
+              <span className="hidden sm:inline">🗑️ Vider</span>
+            </button>
           )}
         </div>
 
@@ -69,12 +71,12 @@ const LotteryHistory = ({
           </div>
         )}
 
-        <div className="space-y-3 p-4 max-h-96 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 max-h-96 overflow-y-auto overflow-x-hidden custom-scrollbar">
           {history.map((result, index) => (
             <div
               key={`${result.timestamp.getTime()}-${index}`}
               className={`
-                relative bg-white border-2 rounded-lg p-4 transition-all duration-300 hover:shadow-md cursor-pointer
+                relative bg-white border-2 rounded-lg p-3 sm:p-4 transition-all duration-300 hover:shadow-md cursor-pointer
                 ${
                   index === 0
                     ? "border-secondary-500 bg-gradient-to-r from-secondary-200 to-secondary-100"
@@ -85,7 +87,7 @@ const LotteryHistory = ({
               title="Cliquez pour voir tous les éléments"
             >
               {index === 0 && (
-                <div className="absolute -top-4 -right-3 bg-secondary-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                <div className="absolute -top-3 sm:-top-4 -right-2 sm:-right-3 bg-secondary-500 text-white text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
                   Récent
                 </div>
               )}
@@ -93,21 +95,21 @@ const LotteryHistory = ({
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
                   {result.title && (
-                    <div className="mb-2">
-                      <h4 className="font-semibold text-accent-800 text-base break-words">
+                    <div className="mb-1.5 sm:mb-2">
+                      <h4 className="font-semibold text-accent-800 text-sm sm:text-base break-words">
                         {result.title}
                       </h4>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-2xl">🏆</span>
-                    <span className="font-bold text-accent-800 text-lg break-words">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                    <span className="text-lg sm:text-2xl">🏆</span>
+                    <span className="font-bold text-accent-800 text-base sm:text-lg break-words">
                       {result.winner.name}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-accent-600 flex-wrap">
+                  <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-accent-600 flex-wrap">
                     <div className="flex items-center gap-1 whitespace-nowrap">
                       <span>🕒</span>
                       {result.timestamp.toLocaleString("fr-FR", {
@@ -181,7 +183,7 @@ const LotteryHistory = ({
         onCancel={() => setShowClearConfirm(false)}
       />
 
-      {/* ✅ Modal supprimer entrée */}
+      {/* Delete Entry Modal */}
       {entryToDelete && (
         <ConfirmModal
           isOpen={true}

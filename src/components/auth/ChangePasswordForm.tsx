@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UserAuth } from "../../context/AuthContext";
 import { getErrorMessage } from "../../lib/errorUtils";
+import { logger } from "../../lib/logger";
 import MfaVerificationModal from "./MfaVerificationModal";
 
 interface SessionWithAal {
@@ -24,7 +25,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
     new: string;
   } | null>(null);
 
-  // États pour l'affichage des mots de passe
+
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -65,13 +66,13 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
     setIsLoading(true);
 
     try {
-      // Import dynamique pour vérifier les facteurs MFA
+
       const { supabase } = await import("../../lib/supabaseClient");
       const { data: factors } = await supabase.auth.mfa.listFactors();
       const hasMfa = factors?.all && factors.all.length > 0;
 
       if (hasMfa && (auth?.session as SessionWithAal)?.aal !== "aal2") {
-        // MFA requis - stocker les données et montrer la modale
+
         setPendingPasswordData({
           current: currentPassword,
           new: newPassword,
@@ -81,11 +82,11 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
         return;
       }
 
-      // Pas de MFA ou déjà AAL2 - procéder directement
+
       await performPasswordUpdate(currentPassword, newPassword);
-    } catch {
+    } catch (error) {
       setError("Une erreur est survenue. Veuillez réessayer.");
-      console.error("Erreur changement mot de passe:", error);
+      logger.error("Erreur changement mot de passe", error);
       setIsLoading(false);
     }
   };
@@ -113,9 +114,9 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
             : "Erreur lors de la modification du mot de passe"
         );
       }
-    } catch {
+    } catch (error) {
       setError("Une erreur est survenue. Veuillez réessayer.");
-      console.error("Erreur changement mot de passe:", error);
+      logger.error("Erreur changement mot de passe", error);
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +139,7 @@ const ChangePasswordForm = ({ onCancel }: ChangePasswordFormProps) => {
     setIsLoading(false);
   };
 
-  // Composant icône œil
+
   const EyeIcon = ({
     show,
     onClick,

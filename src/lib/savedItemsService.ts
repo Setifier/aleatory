@@ -3,32 +3,28 @@ import { normalizeText } from "./textUtils";
 import { logSupabaseError } from "./logger";
 import * as Sentry from "@sentry/react";
 
-// Type pour la relation item_folders depuis Supabase
 export type ItemFolderRelation = {
   folder_id: number;
 };
 
-// Type pour les données brutes venant de Supabase avec les jointures
 export type SavedItemRaw = {
   id: number;
   user_id: string;
   item_name: string;
-  folder_id?: number | null; // Gardé pour compatibilité mais deprecated
+  folder_id?: number | null;
   created_at: string;
-  item_folders?: ItemFolderRelation[]; // Relations depuis la jointure
+  item_folders?: ItemFolderRelation[];
 };
 
-// Type final exposé par l'API
 export type SavedItem = {
   id: number;
   user_id: string;
   item_name: string;
-  folder_id?: number | null; // Gardé pour compatibilité mais deprecated
-  folder_ids?: number[]; // Nouveau: array des dossiers
+  folder_id?: number | null;
+  folder_ids?: number[];
   created_at: string;
 };
 
-// Vérifier si un item existe déjà
 export const checkItemExists = async (
   itemName: string
 ): Promise<{ exists: boolean; error?: string }> => {
@@ -41,7 +37,6 @@ export const checkItemExists = async (
       return { exists: false, error: "Utilisateur non connecté" };
     }
 
-    // Normaliser le nom de l'item pour la comparaison
     const normalizedName = normalizeText(itemName);
 
     const { data, error } = await supabase
@@ -72,7 +67,6 @@ export const checkItemExists = async (
   }
 };
 
-// Sauvegarder un item
 export const saveItem = async (
   itemName: string
 ): Promise<{ success: boolean; error?: string }> => {
@@ -85,10 +79,7 @@ export const saveItem = async (
       return { success: false, error: "Utilisateur non connecté" };
     }
 
-    // Normaliser le nom de l'item
     const normalizedName = normalizeText(itemName);
-
-    // Vérifier si l'item existe déjà (avec le nom normalisé)
     const existsResult = await checkItemExists(normalizedName);
     if (existsResult.error) {
       return { success: false, error: existsResult.error };
@@ -129,7 +120,6 @@ export const saveItem = async (
   }
 };
 
-// Charger les items de l'utilisateur avec leurs dossiers
 export const loadUserItems = async (): Promise<{
   items: SavedItem[];
   error?: string;
@@ -143,7 +133,6 @@ export const loadUserItems = async (): Promise<{
       return { items: [], error: "Utilisateur non connecté" };
     }
 
-    // Charger les items avec leurs relations de dossiers
     const { data, error } = await supabase
       .from("saved_items")
       .select(`
@@ -160,7 +149,6 @@ export const loadUserItems = async (): Promise<{
       return { items: [], error: error.message };
     }
 
-    // Transformer les données pour inclure folder_ids avec types corrects
     const itemsWithFolders: SavedItem[] = (data as SavedItemRaw[] || []).map(item => ({
       ...item,
       folder_ids: (item.item_folders || []).map((rel: ItemFolderRelation) => rel.folder_id)
@@ -181,7 +169,6 @@ export const loadUserItems = async (): Promise<{
   }
 };
 
-// Supprimer un item
 export const deleteItem = async (
   itemName: string
 ): Promise<{ success: boolean; error?: string }> => {
@@ -194,7 +181,6 @@ export const deleteItem = async (
       return { success: false, error: "Utilisateur non connecté" };
     }
 
-    // Normaliser le nom de l'item pour la suppression
     const normalizedName = normalizeText(itemName);
 
     const { error } = await supabase
@@ -224,7 +210,6 @@ export const deleteItem = async (
   }
 };
 
-// Toggle d'assignation item-dossier (ajouter ou retirer)
 export const toggleItemFolder = async (
   itemId: number,
   folderId: number,
@@ -238,7 +223,6 @@ export const toggleItemFolder = async (
     }
 
     if (shouldAssign) {
-      // Ajouter la relation
       const { error } = await supabase
         .from("item_folders")
         .insert({
@@ -248,7 +232,6 @@ export const toggleItemFolder = async (
         });
 
       if (error) {
-        // Si l'erreur est due à une contrainte unique, c'est OK
         if (error.code === '23505') {
           return { success: true };
         }
@@ -258,7 +241,6 @@ export const toggleItemFolder = async (
 
       return { success: true };
     } else {
-      // Supprimer la relation
       const { error } = await supabase
         .from("item_folders")
         .delete()
@@ -288,20 +270,17 @@ export const toggleItemFolder = async (
   }
 };
 
-// Assigner un item à un dossier (fonction legacy, garde pour compatibilité)
 export const assignItemToFolder = async (
   itemId: number,
   folderId: number | null
 ): Promise<{ success: boolean; error?: string }> => {
   if (folderId === null) {
-    // Pour décocher, on ne fait rien car on utilise maintenant toggleItemFolder
     return { success: true };
   }
 
   return toggleItemFolder(itemId, folderId, true);
 };
 
-// Obtenir les items d'un dossier spécifique (nouvelle version avec item_folders)
 export const getItemsByFolder = async (
   folderId: number | null
 ): Promise<{ success: boolean; error?: string; items?: SavedItem[] }> => {
@@ -313,7 +292,6 @@ export const getItemsByFolder = async (
     }
 
     if (folderId === null) {
-      // Récupérer les items sans dossier (pas dans item_folders)
       const { data, error } = await supabase
         .from("saved_items")
         .select(`
@@ -327,7 +305,6 @@ export const getItemsByFolder = async (
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Erreur récupération items sans dossier:", error);
         logSupabaseError("récupération items sans dossier", error);
 
         Sentry.captureException(error, {
@@ -343,7 +320,6 @@ export const getItemsByFolder = async (
 
       return { success: true, items: data || [] };
     } else {
-      // Récupérer les items d'un dossier spécifique via item_folders
       const { data, error } = await supabase
         .from("saved_items")
         .select(`
@@ -357,7 +333,6 @@ export const getItemsByFolder = async (
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Erreur récupération items par dossier:", error);
         logSupabaseError("récupération items par dossier", error);
 
         Sentry.captureException(error, {

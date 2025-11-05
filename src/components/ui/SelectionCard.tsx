@@ -32,25 +32,25 @@ const TournamentModeCard = ({
         <div className="absolute -inset-1 bg-gradient-to-r from-primary-400 to-accent-400 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-300"></div>
       )}
 
-      <div className="relative">
+      <div className="relative p-4 sm:p-6">
         {/* Vector */}
-        <div className="group-hover:scale-110 transition-transform duration-300 -translate-y-6">
+        <div className="group-hover:scale-110 transition-transform duration-300 -translate-y-4 sm:-translate-y-6">
           <img
             alt={`${title} illustration`}
             src={image}
-            className="w-40 h-40 mx-auto object-contain group-hover:scale-110 transition-transform duration-300"
+            className="w-32 h-32 sm:w-40 sm:h-40 mx-auto object-contain group-hover:scale-110 transition-transform duration-300"
           />
         </div>
 
         {/* Title */}
-        <h3 className="text-2xl font-bold text-accent-800 mb-2">{title}</h3>
+        <h3 className="text-xl sm:text-2xl font-bold text-accent-800 mb-2">{title}</h3>
 
         {/* Description */}
-        <p className="text-accent-600 text-sm">{description}</p>
+        <p className="text-accent-600 text-xs sm:text-sm">{description}</p>
 
         {/* Arrow indicator */}
         {!disabled && (
-          <div className="m-4 flex items-center justify-center gap-2 text-primary-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="mt-3 sm:mt-4 flex items-center justify-center gap-2 text-primary-500 font-medium text-sm sm:text-base opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <span>Commencer</span>
             <svg
               className="w-4 h-4"

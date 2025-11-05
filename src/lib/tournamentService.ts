@@ -7,9 +7,6 @@ import {
 import { logSupabaseError } from "./logger";
 import * as Sentry from "@sentry/react";
 
-/**
- * Create a new tournament
- */
 export const createTournament = async (
   form: TournamentCreationForm
 ): Promise<{ success: boolean; tournament?: Tournament; error?: string }> => {
@@ -61,9 +58,6 @@ export const createTournament = async (
   }
 };
 
-/**
- * Get user's tournaments
- */
 export const getUserTournaments = async (): Promise<{
   tournaments: Tournament[];
   error?: string;
@@ -101,9 +95,6 @@ export const getUserTournaments = async (): Promise<{
   }
 };
 
-/**
- * Get tournament by ID
- */
 export const getTournamentById = async (
   tournamentId: string
 ): Promise<{ tournament?: Tournament; error?: string }> => {
@@ -137,9 +128,6 @@ export const getTournamentById = async (
   }
 };
 
-/**
- * Create tournament matches
- */
 export const createTournamentMatches = async (
   tournamentId: string,
   matches: Omit<TournamentMatch, "id" | "created_at">[]
@@ -170,9 +158,6 @@ export const createTournamentMatches = async (
   }
 };
 
-/**
- * Get tournament matches
- */
 export const getTournamentMatches = async (
   tournamentId: string
 ): Promise<{ matches: TournamentMatch[]; error?: string }> => {
@@ -207,9 +192,6 @@ export const getTournamentMatches = async (
   }
 };
 
-/**
- * Update tournament status
- */
 export const updateTournamentStatus = async (
   tournamentId: string,
   status: "draft" | "active" | "completed"
@@ -243,9 +225,6 @@ export const updateTournamentStatus = async (
   }
 };
 
-/**
- * Delete tournament
- */
 export const deleteTournament = async (
   tournamentId: string
 ): Promise<{ success: boolean; error?: string }> => {

@@ -46,7 +46,7 @@ const LotterySection = ({
     useState<LotteryResult | null>(null);
   const [lotteryTitle, setLotteryTitle] = useState<string>("");
 
-  // Gérer l'affichage du résultat avec animation
+
   useEffect(() => {
     if (
       currentResult &&
@@ -56,7 +56,7 @@ const LotterySection = ({
       setAnimatingResult(currentResult);
       setShowResult(true);
 
-      // Auto-fermer après 5 secondes
+
       const timeout = setTimeout(() => {
         setShowResult(false);
         setAnimatingResult(null);
@@ -66,7 +66,7 @@ const LotterySection = ({
     }
   }, [currentResult, showResult, manuallyClosedResult]);
 
-  // Clear l'historique si non connecté et qu'on actualise
+
   useEffect(() => {
     if (!isAuthenticated) {
       const handleBeforeUnload = () => {
@@ -79,7 +79,7 @@ const LotterySection = ({
     }
   }, [isAuthenticated, clearHistory]);
 
-  // ✅ Écouter les événements depuis SavedItemCard → utilise toggleItem (sans erreur)
+
   useEffect(() => {
     const handleToggleFromEvent = (
       event: CustomEvent<{ itemName: string }>
@@ -121,22 +121,22 @@ const LotterySection = ({
   const handleDraw = async () => {
     const result = await drawLottery(lotteryTitle);
     if (result) {
-      // Nettoyer le titre après utilisation
+
       setLotteryTitle("");
-      // L'animation sera gérée par l'useEffect
+
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Zone d'ajout d'éléments */}
+      {/* Add Elements Section */}
       <AddElementForm
         onAddItem={handleAddItem}
         error={error}
         onDismissError={clearError}
       />
 
-      {/* Liste des éléments */}
+      {/* Elements List */}
       <ElementsList
         items={items}
         isAuthenticated={isAuthenticated}
@@ -163,7 +163,7 @@ const LotterySection = ({
         onClose={() => {
           setShowResult(false);
           setAnimatingResult(null);
-          setManuallyClosedResult(currentResult); // Marquer ce résultat comme fermé manuellement
+          setManuallyClosedResult(currentResult);
         }}
       />
 
