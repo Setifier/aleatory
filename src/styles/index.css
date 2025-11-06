@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,7 @@
 
 /* ===== BASE STYLES ===== */
 body {
-  font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
   font-variation-settings: normal;
 }
 
@@ -47,7 +47,8 @@ body {
 
 /* Animation Winner - Grossissement/Rapetissage */
 @keyframes winnerPulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -90,4 +91,12 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

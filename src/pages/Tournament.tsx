@@ -10,10 +10,10 @@ const Tournament = () => {
         <div className="mb-8">
           <button
             onClick={() => navigate("/")}
-            className="text-accent-600 hover:text-accent-800 flex items-center gap-2 mb-4"
+            className="text-accent-600 hover:text-accent-800 flex items-center gap-2 mb-4 transition-colors p-2"
           >
             <svg
-              className="w-5 h-5"
+              className="w-8 h-8 md:w-5 md:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -25,7 +25,7 @@ const Tournament = () => {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            Back to Home
+            <span className="hidden md:inline">Retour à l'accueil</span>
           </button>
 
           <h1 className="text-4xl font-bold text-accent-900">

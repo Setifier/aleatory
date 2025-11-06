@@ -9,19 +9,24 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileButtonRef = useRef<HTMLButtonElement>(null);
   const auth = UserAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Dropdown desktop
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setIsDropdownOpen(false);
       }
+
       if (
         mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(event.target as Node)
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        mobileButtonRef.current &&
+        !mobileButtonRef.current.contains(event.target as Node)
       ) {
         setIsMobileMenuOpen(false);
       }
@@ -35,12 +40,12 @@ const Navbar = () => {
 
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isMobileMenuOpen]);
 
@@ -52,12 +57,12 @@ const Navbar = () => {
     try {
       const result = await auth?.signOut();
       if (result?.success) {
-        window.location.href = '/signin';
+        window.location.href = "/signin";
       } else {
         logger.error("Sign out error", result?.error);
       }
     } catch (error) {
-      logger.error('Sign out error', error);
+      logger.error("Sign out error", error);
     } finally {
       setIsDropdownOpen(false);
       setShowSignOutModal(false);
@@ -89,7 +94,9 @@ const Navbar = () => {
                   onClick={toggleDropdown}
                   className="text-accent-700 hover:text-primary-600 px-3 py-2 rounded-md text-xl font-medium transition-colors flex items-center"
                 >
-                  {auth?.session?.user?.user_metadata?.pseudo || auth?.session?.user?.email?.split('@')[0] || "Mon Profil"}
+                  {auth?.session?.user?.user_metadata?.pseudo ||
+                    auth?.session?.user?.email?.split("@")[0] ||
+                    "Mon Profil"}
                   <svg
                     className={`ml-1 h-4 w-4 transition-transform ${
                       isDropdownOpen ? "rotate-180" : ""
@@ -143,12 +150,13 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
+            ref={mobileButtonRef}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-md text-accent-700 hover:text-primary-600 hover:bg-secondary-50 transition-colors"
+            className="md:hidden p-4 rounded-md text-accent-700 hover:text-primary-600 hover:bg-secondary-50 transition-colors relative z-50 touch-manipulation"
             aria-label="Menu utilisateur"
           >
             <svg
-              className="h-6 w-6"
+              className="h-8 w-8 pointer-events-none"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -157,7 +165,7 @@ const Navbar = () => {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   d="M6 18L18 6M6 6l12 12"
                 />
               ) : (
@@ -175,12 +183,16 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-secondary-200 bg-white" ref={mobileMenuRef}>
+        <div
+          className="md:hidden border-t border-secondary-200 bg-white z-40"
+          ref={mobileMenuRef}
+        >
           <div className="py-2">
             {auth?.session ? (
               <>
                 <div className="px-4 py-2 text-sm text-accent-600">
-                  {auth?.session?.user?.user_metadata?.pseudo || auth?.session?.user?.email}
+                  {auth?.session?.user?.user_metadata?.pseudo ||
+                    auth?.session?.user?.email}
                 </div>
                 <Link
                   to="/settings"
