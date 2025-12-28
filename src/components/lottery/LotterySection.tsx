@@ -130,29 +130,37 @@ const LotterySection = ({
   return (
     <div className="space-y-6">
       {/* Add Elements Section */}
-      <AddElementForm
-        onAddItem={handleAddItem}
-        error={error}
-        onDismissError={clearError}
-      />
+      <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg">
+        <AddElementForm
+          onAddItem={handleAddItem}
+          error={error}
+          onDismissError={clearError}
+        />
+      </div>
 
       {/* Elements List */}
-      <ElementsList
-        items={items}
-        isAuthenticated={isAuthenticated}
-        savedItemsNames={savedItemsNames}
-        savingItems={savingItems}
-        onRemoveItem={removeItem}
-        onSaveItem={handleSaveItem}
-        onClearItems={clearItems}
-      />
+      <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg">
+        <ElementsList
+          items={items}
+          isAuthenticated={isAuthenticated}
+          savedItemsNames={savedItemsNames}
+          savingItems={savingItems}
+          onRemoveItem={removeItem}
+          onSaveItem={handleSaveItem}
+          onClearItems={clearItems}
+        />
+      </div>
 
       {/* Champ de titre optionnel */}
-      <LotteryTitle
-        value={lotteryTitle}
-        onChange={setLotteryTitle}
-        itemsCount={items.length}
-      />
+      {items.length >= 2 && (
+        <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg">
+          <LotteryTitle
+            value={lotteryTitle}
+            onChange={setLotteryTitle}
+            itemsCount={items.length}
+          />
+        </div>
+      )}
 
       {/* Roulette/Animation de tirage */}
       <LotteryWheel
@@ -176,12 +184,14 @@ const LotterySection = ({
 
       {/* Historique des tirages */}
       {history.length > 0 && (
-        <LotteryHistory
-          history={history}
-          onClear={clearHistory}
-          onDeleteEntry={isAuthenticated ? deleteHistoryEntry : undefined}
-          isAuthenticated={isAuthenticated}
-        />
+        <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg">
+          <LotteryHistory
+            history={history}
+            onClear={clearHistory}
+            onDeleteEntry={isAuthenticated ? deleteHistoryEntry : undefined}
+            isAuthenticated={isAuthenticated}
+          />
+        </div>
       )}
     </div>
   );
