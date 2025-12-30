@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { LotteryResult, useLottery } from "../../hooks/useLottery";
-import LotteryWheel from "./LotteryWheel";
+import LotteryMachineCSS from "./LotteryMachineCSS";
 import LotteryHistory from "./LotteryHistory";
 import AddElementForm from "./AddElementForm";
 import LotteryTitle from "./LotteryTitle";
 import ElementsList from "./ElementsList";
 import DrawButton from "./DrawButton";
+import WinnerModal from "./WinnerModal";
 
 interface LotterySectionProps {
   onSaveItem?: (itemName: string) => Promise<boolean>;
@@ -53,16 +54,22 @@ const LotterySection = ({
       !showResult &&
       currentResult !== manuallyClosedResult
     ) {
-      setAnimatingResult(currentResult);
-      setShowResult(true);
+      // Wait 3500ms for the lottery machine animation to complete before showing modal
+      const showTimeout = setTimeout(() => {
+        setAnimatingResult(currentResult);
+        setShowResult(true);
+      }, 3500);
 
-
-      const timeout = setTimeout(() => {
+      // Auto-close modal after 5000ms (3500ms animation + 5000ms display)
+      const hideTimeout = setTimeout(() => {
         setShowResult(false);
         setAnimatingResult(null);
-      }, 5000);
+      }, 8500);
 
-      return () => clearTimeout(timeout);
+      return () => {
+        clearTimeout(showTimeout);
+        clearTimeout(hideTimeout);
+      };
     }
   }, [currentResult, showResult, manuallyClosedResult]);
 
@@ -162,12 +169,17 @@ const LotterySection = ({
         </div>
       )}
 
-      {/* Roulette/Animation de tirage */}
-      <LotteryWheel
+      {/* Machine à loterie CSS */}
+      <LotteryMachineCSS
         items={items}
         isDrawing={isDrawing}
+        winner={(isDrawing || showResult) && currentResult ? currentResult.winner.name : null}
+      />
+
+      {/* Modal de résultat */}
+      <WinnerModal
+        isOpen={showResult && !!animatingResult}
         result={animatingResult}
-        isVisible={showResult}
         onClose={() => {
           setShowResult(false);
           setAnimatingResult(null);

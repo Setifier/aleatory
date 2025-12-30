@@ -1,0 +1,295 @@
+/* Container Slot Machine */
+.slot-machine-container {
+  width: 100%;
+  height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(97, 97, 216, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(188, 184, 143, 0.15) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(24, 24, 84, 0.4) 0%, rgba(97, 97, 216, 0.2) 100%);
+  border-radius: 1.5rem;
+  border: 2px solid rgba(188, 184, 143, 0.3);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 80px rgba(97, 97, 216, 0.1);
+}
+
+/* Cadre de la machine */
+.slot-machine-frame {
+  position: relative;
+  padding: 2rem;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ligne de victoire au centre */
+.win-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 90px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 215, 0, 0.1) 20%,
+    rgba(255, 215, 0, 0.15) 50%,
+    rgba(255, 215, 0, 0.1) 80%,
+    transparent 100%
+  );
+  border-top: 2px solid rgba(255, 215, 0, 0.4);
+  border-bottom: 2px solid rgba(255, 215, 0, 0.4);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.win-line::before,
+.win-line::after {
+  content: "★";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  color: rgba(255, 215, 0, 0.6);
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+}
+
+.win-line::before {
+  left: 1rem;
+}
+
+.win-line::after {
+  right: 1rem;
+}
+
+/* Colonne unique centrale */
+.slot-column-single {
+  position: relative;
+  width: 280px;
+  height: 360px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0.3) 50%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  border-radius: 1.5rem;
+  border: 3px solid rgba(188, 184, 143, 0.5);
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.6),
+    0 6px 30px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(97, 97, 216, 0.2);
+}
+
+/* Gradient de masquage en haut et en bas */
+.slot-column-single::before,
+.slot-column-single::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 100px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.slot-column-single::before {
+  top: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(24, 24, 84, 0.95) 0%,
+    rgba(24, 24, 84, 0.7) 60%,
+    transparent 100%
+  );
+}
+
+.slot-column-single::after {
+  bottom: 0;
+  background: linear-gradient(
+    0deg,
+    rgba(24, 24, 84, 0.95) 0%,
+    rgba(24, 24, 84, 0.7) 60%,
+    transparent 100%
+  );
+}
+
+/* Rouleau qui défile */
+.slot-reel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+/* Boule dans le slot */
+.slot-ball {
+  width: 260px;
+  height: 100px;
+  margin: 0 auto;
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+
+  /* Fond avec dégradé subtil */
+  background: linear-gradient(
+    135deg,
+    var(--ball-color) 0%,
+    color-mix(in srgb, var(--ball-color) 85%, black) 100%
+  );
+
+  /* Ombres simples et propres */
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 3px 8px rgba(0, 0, 0, 0.3),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 8px rgba(255, 255, 255, 0.2),
+    0 0 20px var(--ball-glow);
+
+  transition: all 0.3s ease;
+}
+
+/* Reflet lumineux simple */
+.slot-ball::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 20px;
+  right: 20px;
+  height: 30px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 60%,
+    transparent 100%
+  );
+  border-radius: 1rem 1rem 50% 50%;
+  pointer-events: none;
+}
+
+/* Boule gagnante */
+.slot-ball.winner {
+  box-shadow:
+    0 0 40px rgba(255, 215, 0, 0.9),
+    0 0 80px rgba(255, 215, 0, 0.5),
+    0 8px 25px rgba(0, 0, 0, 0.6),
+    inset -10px -10px 20px rgba(0, 0, 0, 0.3),
+    inset 15px 15px 25px rgba(255, 255, 255, 0.4);
+  animation: winnerPulse 1s ease-in-out infinite;
+}
+
+@keyframes winnerPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 40px rgba(255, 215, 0, 0.9),
+      0 0 80px rgba(255, 215, 0, 0.5),
+      0 8px 25px rgba(0, 0, 0, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 60px rgba(255, 215, 0, 1),
+      0 0 120px rgba(255, 215, 0, 0.7),
+      0 8px 25px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Texte sur les boules */
+.ball-text {
+  position: relative;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+  text-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.85);
+  padding: 0 16px;
+  word-break: break-word;
+  line-height: 1.4;
+  z-index: 10;
+  max-width: 245px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* Particules */
+.particles-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 15px currentColor;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .slot-machine-container {
+    height: 450px;
+  }
+
+  .slot-column-single {
+    width: 240px;
+    height: 320px;
+  }
+
+  .slot-ball {
+    width: 220px;
+    height: 85px;
+  }
+
+  .ball-text {
+    font-size: 16px;
+    max-width: 205px;
+  }
+
+  .win-line::before,
+  .win-line::after {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .slot-machine-container {
+    height: 400px;
+  }
+
+  .slot-column-single {
+    width: 200px;
+    height: 280px;
+  }
+
+  .slot-ball {
+    width: 180px;
+    height: 75px;
+  }
+
+  .ball-text {
+    font-size: 14px;
+    max-width: 165px;
+  }
+}
