@@ -21,16 +21,16 @@ const Lottery = () => {
     savingItems,
     handleSaveItem,
     handleDeleteSavedItem,
-    loadSavedItems,
+    loadSavedItems: _loadSavedItems,
   } = useSavedItems();
 
   const {
-    folders,
-    loadingFolders,
-    handleCreateFolder,
-    handleDeleteFolder,
-    handleAddFolder,
-    loadFolders,
+    folders: _folders,
+    loadingFolders: _loadingFolders,
+    handleCreateFolder: _handleCreateFolder,
+    handleDeleteFolder: _handleDeleteFolder,
+    handleAddFolder: _handleAddFolder,
+    loadFolders: _loadFolders,
   } = useFolders();
 
   const [currentLotteryItems, setCurrentLotteryItems] = useState<string[]>([]);
@@ -39,14 +39,6 @@ const Lottery = () => {
     const event = new CustomEvent("addItemToLottery", {
       detail: { itemName },
     });
-    window.dispatchEvent(event);
-  };
-
-  const handleFolderAssignmentChange = () => {
-    loadSavedItems();
-    loadFolders();
-
-    const event = new CustomEvent("foldersChanged");
     window.dispatchEvent(event);
   };
 

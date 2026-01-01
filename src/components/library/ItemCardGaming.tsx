@@ -17,7 +17,7 @@ export default function ItemCardGaming({
   onDelete,
 }: ItemCardGamingProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [_tilt, setTilt] = useState({ x: 0, y: 0 });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isHovered) return;
@@ -104,10 +104,7 @@ export default function ItemCardGaming({
           {/* Actions */}
           <div className="flex gap-2">
             <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddToLottery();
-              }}
+              onClick={() => onAddToLottery()}
               variant={isInLottery ? "outline" : "gradient"}
               size="sm"
               className="flex-1 text-xs"
@@ -115,10 +112,7 @@ export default function ItemCardGaming({
               {isInLottery ? "✓ Ajouté" : "➕ Ajouter"}
             </Button>
             <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
+              onClick={() => onDelete()}
               variant="ghost"
               size="sm"
               className="text-red-400 hover:text-red-300"

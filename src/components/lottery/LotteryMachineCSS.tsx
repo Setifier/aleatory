@@ -74,7 +74,6 @@ export default function LotteryMachineCSS({
           <div className="slot-column-single">
             <div className="slot-reel" style={{ position: 'relative' }}>
               {itemsToRender.map((item, index) => {
-                const originalIndex = index % items.length;
                 const isWinner = showWinner && index === winnerIndexInLoop;
 
                 // Position de repos : items distribués pour être visibles des deux côtés
