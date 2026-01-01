@@ -6,7 +6,7 @@ import { useSavedItems } from "../hooks/useSavedItems";
 import { useFolders } from "../hooks/useFolders";
 
 import LotterySection from "../components/lottery/LotterySection";
-import ItemsLibrary from "../components/library/ItemsLibrary";
+import ItemsLibraryGaming from "../components/library/ItemsLibraryGaming";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import Button from "../components/ui/Button";
 
@@ -113,25 +113,18 @@ const Lottery = () => {
         {/* Items Library (only for authenticated users) */}
         {auth?.session && (
           <motion.div
-            className="max-w-4xl mx-auto mb-8"
+            className="max-w-6xl mx-auto mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <ItemsLibrary
+            <ItemsLibraryGaming
               savedItems={savedItems}
               loadingSavedItems={loadingSavedItems}
-              savingItems={savingItems}
               lotteryItems={currentLotteryItems}
               onSaveItem={handleSaveItem}
               onDeleteItem={handleDeleteSavedItem}
               onAddItemToLottery={handleAddToLottery}
-              folders={folders}
-              loadingFolders={loadingFolders}
-              onCreateFolder={handleCreateFolder}
-              onDeleteFolder={handleDeleteFolder}
-              onAddFolder={handleAddFolder}
-              onRefreshItems={handleFolderAssignmentChange}
             />
           </motion.div>
         )}

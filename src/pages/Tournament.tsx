@@ -1,19 +1,35 @@
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { UserAuth } from "../context/AuthContext";
+import AnimatedBackground from "../components/ui/AnimatedBackground";
+import GroupsDrawSection from "../components/tournament/GroupsDrawSection";
+import Button from "../components/ui/Button";
 
 const Tournament = () => {
   const navigate = useNavigate();
+  const auth = UserAuth();
+  const isAuthenticated = !!auth?.session;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-primary-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Animated Background */}
+      <AnimatedBackground variant="mesh" />
+
+      <div className="relative z-10 max-w-7xl mx-auto py-8 px-4">
+        {/* Back Button */}
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Button
             onClick={() => navigate("/")}
-            className="text-accent-600 hover:text-accent-800 flex items-center gap-2 mb-4 transition-colors p-2"
+            variant="ghost"
+            className="text-white/80 hover:text-white"
           >
             <svg
-              className="w-8 h-8 md:w-5 md:h-5"
+              className="w-5 h-5 inline mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -25,27 +41,36 @@ const Tournament = () => {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            <span className="hidden md:inline">Retour à l'accueil</span>
-          </button>
+            Retour à l'accueil
+          </Button>
+        </motion.div>
 
-          <h1 className="text-4xl font-bold text-accent-900">
-            🏆 Tournament Mode
+        {/* Title Section */}
+        <motion.div
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">
+            <span className="gradient-text">🏆 MODE TOURNAMENT</span>
           </h1>
-          <p className="text-accent-600 mt-2">
-            Create brackets and group stages for your competitions
+          <p className="text-white/70 text-lg max-w-2xl mx-auto">
+            {isAuthenticated
+              ? "Créez vos tirages par groupes avec chapeaux ou aléatoire"
+              : "Connectez-vous pour sauvegarder vos tirages"}
           </p>
-        </div>
+        </motion.div>
 
-        {/* Placeholder content */}
-        <div className="bg-white rounded-xl p-8 border border-secondary-200 shadow-md text-center">
-          <div className="text-6xl mb-4">🚧</div>
-          <h2 className="text-2xl font-bold text-accent-800 mb-2">
-            Under Construction
-          </h2>
-          <p className="text-accent-600">
-            Tournament creation interface coming soon...
-          </p>
-        </div>
+        {/* Main Content */}
+        <motion.div
+          className="max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <GroupsDrawSection isAuthenticated={isAuthenticated} />
+        </motion.div>
       </div>
     </div>
   );
