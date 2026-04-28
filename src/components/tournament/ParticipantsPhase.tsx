@@ -21,9 +21,9 @@ interface ParticipantsPhaseProps {
   onRemove: (id: string) => void;
   onClear: () => void;
   onDeleteSavedItem: (name: string) => void;
-  onCreateFolder: (name: string) => void;
+  onCreateFolder: (name: string) => Promise<void>;
   onDeleteFolder: (name: string) => void;
-  onToggleItemFolder: (itemId: number, folderId: number, shouldAssign: boolean) => void;
+  onToggleItemFolder: (itemId: number, folderId: number, shouldAssign: boolean) => Promise<void>;
 }
 
 export default function ParticipantsPhase({

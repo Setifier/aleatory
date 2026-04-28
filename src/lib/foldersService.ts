@@ -77,7 +77,7 @@ export const loadUserFolders = async (): Promise<{ success: boolean; error?: str
 
     return { success: true, folders: data ?? [] };
   } catch (err) {
-    return { success: false, folders: [], ...handleServiceError("loadUserFolders", "folders", "load", err) };
+    return { folders: [], ...handleServiceError("loadUserFolders", "folders", "load", err) };
   }
 };
 

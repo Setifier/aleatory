@@ -205,7 +205,6 @@ export default function HomeHistory({ isAuthenticated, refreshKey, onRelaunch }:
                         <LotteryListView
                           entries={lotteryHistory.slice(0, 50)}
                           totalCount={lotteryHistory.length}
-                          onDelete={id => confirmDelete(id, "lottery")}
                           onRelaunch={entry => onRelaunch?.(entry.elements, entry.title)}
                           onDetail={setDetailLotteryEntry}
                           onClear={() => setShowClearLottery(true)}
@@ -344,10 +343,9 @@ function DrawModeBadge({ mode }: { mode?: string }) {
 }
 
 // ── List view ─────────────────────────────────────────────────────────────────
-function LotteryListView({ entries, totalCount, onDelete, onRelaunch, onDetail, onClear }: {
+function LotteryListView({ entries, totalCount, onRelaunch, onDetail, onClear }: {
   entries: LotteryHistoryEntry[];
   totalCount: number;
-  onDelete: (id: string) => void;
   onRelaunch: (entry: LotteryHistoryEntry) => void;
   onDetail: (entry: LotteryHistoryEntry) => void;
   onClear: () => void;
