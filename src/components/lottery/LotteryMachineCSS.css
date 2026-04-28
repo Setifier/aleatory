@@ -1,295 +1,337 @@
-/* Container Slot Machine */
-.slot-machine-container {
+/* ═══════════════════════════════════════════
+   LOTTERY MACHINE — wrapper
+═══════════════════════════════════════════ */
+
+.lottery-wrapper {
+  position: relative;
   width: 100%;
-  height: 500px;
+}
+
+/* ─── Empty state ─── */
+.lottery-empty {
+  width: 100%;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(97, 97, 216, 0.08), transparent 70%);
+  border-radius: 1.5rem;
+  border: 2px dashed rgba(255, 255, 255, 0.08);
+}
+
+/* ═══════════════════════════════════════════
+   MACHINE FRAME
+═══════════════════════════════════════════ */
+
+.lottery-frame {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  gap: 1.25rem;
+  padding: 1.75rem 1.25rem;
   background:
-    radial-gradient(circle at 30% 30%, rgba(97, 97, 216, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 70% 70%, rgba(188, 184, 143, 0.15) 0%, transparent 50%),
-    linear-gradient(135deg, rgba(24, 24, 84, 0.4) 0%, rgba(97, 97, 216, 0.2) 100%);
-  border-radius: 1.5rem;
-  border: 2px solid rgba(188, 184, 143, 0.3);
-  backdrop-filter: blur(20px);
-  overflow: hidden;
+    radial-gradient(ellipse at 15% 20%, rgba(97, 97, 216, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 80%, rgba(188, 184, 143, 0.14) 0%, transparent 55%),
+    linear-gradient(145deg, rgba(8, 8, 35, 0.92) 0%, rgba(18, 18, 65, 0.88) 100%);
+  border-radius: 1.75rem;
+  border: 2px solid rgba(188, 184, 143, 0.2);
+  backdrop-filter: blur(24px);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 80px rgba(97, 97, 216, 0.1);
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 80px rgba(97, 97, 216, 0.08);
+  transition: box-shadow 0.6s ease, border-color 0.6s ease;
 }
 
-/* Cadre de la machine */
-.slot-machine-frame {
-  position: relative;
-  padding: 2rem;
-  width: 100%;
-  height: 100%;
+.lottery-frame.winner-active {
+  border-color: rgba(255, 215, 0, 0.45);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 0 60px rgba(255, 215, 0, 0.25),
+    0 0 120px rgba(255, 215, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ═══════════════════════════════════════════
+   SIDE DECORATIONS
+═══════════════════════════════════════════ */
+
+.lottery-side {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 0.85rem;
+  width: 28px;
+  flex-shrink: 0;
 }
 
-/* Ligne de victoire au centre */
-.win-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 90px;
-  transform: translateY(-50%);
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 215, 0, 0.1) 20%,
-    rgba(255, 215, 0, 0.15) 50%,
-    rgba(255, 215, 0, 0.1) 80%,
-    transparent 100%
-  );
-  border-top: 2px solid rgba(255, 215, 0, 0.4);
-  border-bottom: 2px solid rgba(255, 215, 0, 0.4);
-  pointer-events: none;
-  z-index: 5;
+.lottery-star-icon {
+  font-size: 1.2rem;
+  color: rgba(255, 215, 0, 0.35);
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  display: block;
+  text-align: center;
+  transition: color 0.5s ease, text-shadow 0.5s ease;
+  user-select: none;
 }
 
-.win-line::before,
-.win-line::after {
-  content: "★";
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 2rem;
-  color: rgba(255, 215, 0, 0.6);
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+.lottery-frame.winner-active .lottery-star-icon {
+  color: rgba(255, 215, 0, 0.85);
+  text-shadow: 0 0 18px rgba(255, 215, 0, 0.75);
 }
 
-.win-line::before {
-  left: 1rem;
-}
+/* ═══════════════════════════════════════════
+   VIEWPORT
+═══════════════════════════════════════════ */
 
-.win-line::after {
-  right: 1rem;
-}
-
-/* Colonne unique centrale */
-.slot-column-single {
+.lottery-viewport {
   position: relative;
-  width: 280px;
-  height: 360px;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.6) 0%,
-    rgba(0, 0, 0, 0.3) 50%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
-  border-radius: 1.5rem;
-  border: 3px solid rgba(188, 184, 143, 0.5);
-  overflow: hidden;
+  width: 320px;
+  border-radius: 1.25rem;
+  border: 2px solid rgba(188, 184, 143, 0.35);
+  background: rgba(0, 0, 0, 0.45);
   box-shadow:
-    inset 0 0 40px rgba(0, 0, 0, 0.6),
-    0 6px 30px rgba(0, 0, 0, 0.5),
-    0 0 60px rgba(97, 97, 216, 0.2);
+    inset 0 0 50px rgba(0, 0, 0, 0.65),
+    0 4px 24px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-/* Gradient de masquage en haut et en bas */
-.slot-column-single::before,
-.slot-column-single::after {
-  content: "";
+/* ─── Fade overlays ─── */
+.lottery-fade-top,
+.lottery-fade-bottom {
   position: absolute;
   left: 0;
   right: 0;
-  height: 100px;
+  height: 36%;
   pointer-events: none;
   z-index: 10;
 }
 
-.slot-column-single::before {
+.lottery-fade-top {
   top: 0;
   background: linear-gradient(
     180deg,
-    rgba(24, 24, 84, 0.95) 0%,
-    rgba(24, 24, 84, 0.7) 60%,
+    rgba(6, 6, 28, 0.97) 0%,
+    rgba(6, 6, 28, 0.65) 50%,
     transparent 100%
   );
 }
 
-.slot-column-single::after {
+.lottery-fade-bottom {
   bottom: 0;
   background: linear-gradient(
     0deg,
-    rgba(24, 24, 84, 0.95) 0%,
-    rgba(24, 24, 84, 0.7) 60%,
+    rgba(6, 6, 28, 0.97) 0%,
+    rgba(6, 6, 28, 0.65) 50%,
     transparent 100%
   );
 }
 
-/* Rouleau qui défile */
-.slot-reel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.75rem 0;
+/* ─── Center winner zone ─── */
+.lottery-winner-zone {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  pointer-events: none;
+  z-index: 5;
+  border-top: 2px solid rgba(255, 215, 0, 0.25);
+  border-bottom: 2px solid rgba(255, 215, 0, 0.25);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 215, 0, 0.04) 20%,
+    rgba(255, 215, 0, 0.07) 50%,
+    rgba(255, 215, 0, 0.04) 80%,
+    transparent 100%
+  );
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
 }
 
-/* Boule dans le slot */
-.slot-ball {
-  width: 260px;
-  height: 100px;
-  margin: 0 auto;
-  border-radius: 1.5rem;
+.lottery-winner-zone.active {
+  border-color: rgba(255, 215, 0, 0.75);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 215, 0, 0.1) 20%,
+    rgba(255, 215, 0, 0.16) 50%,
+    rgba(255, 215, 0, 0.1) 80%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 24px rgba(255, 215, 0, 0.2),
+    inset 0 0 16px rgba(255, 215, 0, 0.04);
+}
+
+/* ─── Reel container & reel ─── */
+.lottery-reel-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.lottery-reel {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 0;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════
+   REEL ITEMS
+═══════════════════════════════════════════ */
+
+.lottery-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-
-  /* Fond avec dégradé subtil */
+  border-radius: 0.875rem;
   background: linear-gradient(
     135deg,
-    var(--ball-color) 0%,
-    color-mix(in srgb, var(--ball-color) 85%, black) 100%
+    rgba(97, 97, 216, 0.18) 0%,
+    rgba(50, 50, 140, 0.16) 100%
   );
-
-  /* Ombres simples et propres */
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.5),
-    0 3px 8px rgba(0, 0, 0, 0.3),
-    inset 0 -2px 8px rgba(0, 0, 0, 0.3),
-    inset 0 2px 8px rgba(255, 255, 255, 0.2),
-    0 0 20px var(--ball-glow);
-
-  transition: all 0.3s ease;
+  border: 1.5px solid rgba(97, 97, 216, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s ease, background 0.3s ease;
 }
 
-/* Reflet lumineux simple */
-.slot-ball::before {
+/* Glossy highlight */
+.lottery-item::before {
   content: "";
   position: absolute;
-  top: 8px;
-  left: 20px;
-  right: 20px;
-  height: 30px;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 42%;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.1) 60%,
+    rgba(255, 255, 255, 0.07) 0%,
     transparent 100%
   );
-  border-radius: 1rem 1rem 50% 50%;
+  border-radius: inherit;
   pointer-events: none;
 }
 
-/* Boule gagnante */
-.slot-ball.winner {
-  box-shadow:
-    0 0 40px rgba(255, 215, 0, 0.9),
-    0 0 80px rgba(255, 215, 0, 0.5),
-    0 8px 25px rgba(0, 0, 0, 0.6),
-    inset -10px -10px 20px rgba(0, 0, 0, 0.3),
-    inset 15px 15px 25px rgba(255, 255, 255, 0.4);
-  animation: winnerPulse 1s ease-in-out infinite;
+/* ─── Winner item ─── */
+.lottery-item-winner {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.22) 0%,
+    rgba(184, 134, 11, 0.18) 100%
+  );
+  border-color: rgba(255, 215, 0, 0.75);
+  animation: winnerPulse 0.95s ease-in-out infinite;
 }
 
 @keyframes winnerPulse {
   0%, 100% {
     box-shadow:
-      0 0 40px rgba(255, 215, 0, 0.9),
-      0 0 80px rgba(255, 215, 0, 0.5),
-      0 8px 25px rgba(0, 0, 0, 0.6);
+      0 0 22px rgba(255, 215, 0, 0.38),
+      0 0 45px rgba(255, 215, 0, 0.18);
   }
   50% {
     box-shadow:
-      0 0 60px rgba(255, 215, 0, 1),
-      0 0 120px rgba(255, 215, 0, 0.7),
-      0 8px 25px rgba(0, 0, 0, 0.6);
+      0 0 38px rgba(255, 215, 0, 0.65),
+      0 0 75px rgba(255, 215, 0, 0.32);
   }
 }
 
-/* Texte sur les boules */
-.ball-text {
-  position: relative;
-  font-size: 18px;
-  font-weight: bold;
-  color: white;
+/* ─── Item text ─── */
+.lottery-item-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.82);
   text-align: center;
-  text-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.95),
-    0 2px 4px rgba(0, 0, 0, 0.85);
-  padding: 0 16px;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.85);
+  padding: 0 14px;
   word-break: break-word;
-  line-height: 1.4;
-  z-index: 10;
-  max-width: 245px;
+  line-height: 1.3;
+  position: relative;
+  z-index: 2;
+  max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
-/* Particules */
-.particles-container {
+.lottery-item-winner .lottery-item-text {
+  color: #ffd700;
+  font-size: 16px;
+  text-shadow:
+    0 0 14px rgba(255, 215, 0, 0.55),
+    0 1px 5px rgba(0, 0, 0, 0.85);
+}
+
+/* ═══════════════════════════════════════════
+   PARTICLES
+═══════════════════════════════════════════ */
+
+.lottery-particles {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  overflow: hidden;
   z-index: 20;
+  overflow: visible;
 }
 
-.particle {
+.lottery-particle {
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* ═══════════════════════════════════════════
+   PARTICIPANT COUNT
+═══════════════════════════════════════════ */
+
+.lottery-count {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  box-shadow: 0 0 15px currentColor;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  letter-spacing: 0.03em;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .slot-machine-container {
-    height: 450px;
-  }
-
-  .slot-column-single {
-    width: 240px;
-    height: 320px;
-  }
-
-  .slot-ball {
-    width: 220px;
-    height: 85px;
-  }
-
-  .ball-text {
-    font-size: 16px;
-    max-width: 205px;
-  }
-
-  .win-line::before,
-  .win-line::after {
-    font-size: 1.5rem;
-  }
-}
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
 
 @media (max-width: 640px) {
-  .slot-machine-container {
-    height: 400px;
+  .lottery-viewport {
+    width: 255px;
   }
 
-  .slot-column-single {
-    width: 200px;
-    height: 280px;
+  .lottery-item-text {
+    font-size: 13px;
+    padding: 0 10px;
   }
 
-  .slot-ball {
-    width: 180px;
-    height: 75px;
-  }
-
-  .ball-text {
+  .lottery-item-winner .lottery-item-text {
     font-size: 14px;
-    max-width: 165px;
+  }
+
+  .lottery-side {
+    width: 22px;
+    gap: 0.65rem;
+  }
+
+  .lottery-star-icon {
+    font-size: 1rem;
+  }
+
+  .lottery-frame {
+    padding: 1.25rem 0.75rem;
+    gap: 0.75rem;
   }
 }

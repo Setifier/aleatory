@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { LotteryResult, useLottery } from "../../hooks/useLottery";
+import { SavedItem } from "../../lib/savedItemsService";
+import { FolderItem } from "../../lib/foldersService";
 import LotteryMachineCSS from "./LotteryMachineCSS";
 import LotteryHistory from "./LotteryHistory";
 import AddElementForm from "./AddElementForm";
@@ -7,21 +9,35 @@ import LotteryTitle from "./LotteryTitle";
 import ElementsList from "./ElementsList";
 import DrawButton from "./DrawButton";
 import WinnerModal from "./WinnerModal";
+import InlineLibrary from "../library/InlineLibrary";
 
 interface LotterySectionProps {
-  onSaveItem?: (itemName: string) => Promise<boolean>;
-  savedItemsNames?: Set<string>;
-  savingItems?: Set<string>;
   isAuthenticated: boolean;
   onLotteryItemsChange?: (items: string[]) => void;
+  // Library props (authenticated only)
+  savedItems?: SavedItem[];
+  recentFolder?: FolderItem | null;
+  otherFolders?: FolderItem[];
+  loadingItems?: boolean;
+  onDeleteItem?: (itemName: string) => void;
+  onCreateFolder?: (folderName: string) => Promise<void>;
+  onDeleteFolder?: (folderName: string) => void;
+  onToggleItemFolder?: (itemId: number, folderId: number, shouldAssign: boolean) => Promise<void>;
+  onAutoSaveToRecent?: (itemNames: string[], folderId: number) => Promise<void>;
 }
 
 const LotterySection = ({
-  onSaveItem,
-  savedItemsNames = new Set(),
-  savingItems = new Set(),
   isAuthenticated,
   onLotteryItemsChange,
+  savedItems = [],
+  recentFolder = null,
+  otherFolders = [],
+  loadingItems = false,
+  onDeleteItem,
+  onCreateFolder,
+  onDeleteFolder,
+  onToggleItemFolder,
+  onAutoSaveToRecent,
 }: LotterySectionProps) => {
   const {
     items,
@@ -31,7 +47,7 @@ const LotterySection = ({
     error,
     addItem,
     removeItem,
-    toggleItem, // ✅ Ajoute toggleItem
+    toggleItem,
     drawLottery,
     clearItems,
     clearError,
@@ -40,27 +56,17 @@ const LotterySection = ({
   } = useLottery(isAuthenticated);
 
   const [showResult, setShowResult] = useState(false);
-  const [animatingResult, setAnimatingResult] = useState<LotteryResult | null>(
-    null
-  );
-  const [manuallyClosedResult, setManuallyClosedResult] =
-    useState<LotteryResult | null>(null);
+  const [animatingResult, setAnimatingResult] = useState<LotteryResult | null>(null);
+  const [manuallyClosedResult, setManuallyClosedResult] = useState<LotteryResult | null>(null);
   const [lotteryTitle, setLotteryTitle] = useState<string>("");
 
-
   useEffect(() => {
-    if (
-      currentResult &&
-      !showResult &&
-      currentResult !== manuallyClosedResult
-    ) {
-      // Wait 3500ms for the lottery machine animation to complete before showing modal
+    if (currentResult && !showResult && currentResult !== manuallyClosedResult) {
       const showTimeout = setTimeout(() => {
         setAnimatingResult(currentResult);
         setShowResult(true);
       }, 3500);
 
-      // Auto-close modal after 5000ms (3500ms animation + 5000ms display)
       const hideTimeout = setTimeout(() => {
         setShowResult(false);
         setAnimatingResult(null);
@@ -73,92 +79,81 @@ const LotterySection = ({
     }
   }, [currentResult, showResult, manuallyClosedResult]);
 
-
   useEffect(() => {
     if (!isAuthenticated) {
-      const handleBeforeUnload = () => {
-        clearHistory();
-      };
-
+      const handleBeforeUnload = () => clearHistory();
       window.addEventListener("beforeunload", handleBeforeUnload);
-      return () =>
-        window.removeEventListener("beforeunload", handleBeforeUnload);
+      return () => window.removeEventListener("beforeunload", handleBeforeUnload);
     }
   }, [isAuthenticated, clearHistory]);
 
-
   useEffect(() => {
-    const handleToggleFromEvent = (
-      event: CustomEvent<{ itemName: string }>
-    ) => {
-      toggleItem(event.detail.itemName, true); // true = isFromSaved
+    const handleToggleFromEvent = (event: CustomEvent<{ itemName: string }>) => {
+      toggleItem(event.detail.itemName, true);
     };
-
-    window.addEventListener(
-      "addItemToLottery",
-      handleToggleFromEvent as EventListener
-    );
-    return () =>
-      window.removeEventListener(
-        "addItemToLottery",
-        handleToggleFromEvent as EventListener
-      );
+    window.addEventListener("addItemToLottery", handleToggleFromEvent as EventListener);
+    return () => window.removeEventListener("addItemToLottery", handleToggleFromEvent as EventListener);
   }, [toggleItem]);
 
-  // Notifier le parent des changements dans la liste des items
   useEffect(() => {
     if (onLotteryItemsChange) {
       onLotteryItemsChange(items.map((item) => item.name));
     }
   }, [items, onLotteryItemsChange]);
 
-  // ✅ Pour AddElementForm → utilise addItem (avec erreur si doublon)
-  const handleAddItem = (itemName: string) => {
-    addItem(itemName);
-  };
-
-  const handleSaveItem = async (itemName: string) => {
-    if (onSaveItem) {
-      const success = await onSaveItem(itemName);
-      return success;
-    }
-    return false;
-  };
-
   const handleDraw = async () => {
+    if (isAuthenticated && recentFolder && onAutoSaveToRecent && items.length > 0) {
+      await onAutoSaveToRecent(items.map((i) => i.name), recentFolder.id);
+    }
     const result = await drawLottery(lotteryTitle);
     if (result) {
-
       setLotteryTitle("");
-
     }
   };
+
+  const currentLotteryItemNames = items.map((i) => i.name);
 
   return (
     <div className="space-y-6">
-      {/* Add Elements Section */}
-      <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg">
+      {/* Add Elements + Library */}
+      <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg space-y-4">
         <AddElementForm
-          onAddItem={handleAddItem}
+          onAddItem={(name) => addItem(name)}
           error={error}
           onDismissError={clearError}
         />
+
+        {isAuthenticated && (
+          <>
+            <div className="border-t border-white/8" />
+            <div className="max-h-[260px] overflow-y-auto">
+              <InlineLibrary
+                savedItems={savedItems}
+                recentFolder={recentFolder}
+                otherFolders={otherFolders}
+                lotteryItems={currentLotteryItemNames}
+                loadingItems={loadingItems}
+                onAddItemToLottery={(name) => toggleItem(name, true)}
+                onDeleteItem={onDeleteItem ?? (() => {})}
+                onCreateFolder={onCreateFolder ?? (async () => {})}
+                onDeleteFolder={onDeleteFolder ?? (() => {})}
+                onToggleItemFolder={onToggleItemFolder ?? (async () => {})}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Elements List */}
       <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg">
         <ElementsList
           items={items}
-          isAuthenticated={isAuthenticated}
-          savedItemsNames={savedItemsNames}
-          savingItems={savingItems}
           onRemoveItem={removeItem}
-          onSaveItem={handleSaveItem}
           onClearItems={clearItems}
         />
       </div>
 
-      {/* Champ de titre optionnel */}
+      {/* Optional title */}
       {items.length >= 2 && (
         <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg">
           <LotteryTitle
@@ -169,14 +164,14 @@ const LotterySection = ({
         </div>
       )}
 
-      {/* Machine à loterie CSS */}
+      {/* Machine */}
       <LotteryMachineCSS
         items={items}
         isDrawing={isDrawing}
         winner={(isDrawing || showResult) && currentResult ? currentResult.winner.name : null}
       />
 
-      {/* Modal de résultat */}
+      {/* Winner modal */}
       <WinnerModal
         isOpen={showResult && !!animatingResult}
         result={animatingResult}
@@ -187,14 +182,14 @@ const LotterySection = ({
         }}
       />
 
-      {/* Bouton de tirage */}
+      {/* Draw button */}
       <DrawButton
         itemsCount={items.length}
         isDrawing={isDrawing}
         onDraw={handleDraw}
       />
 
-      {/* Historique des tirages */}
+      {/* History */}
       {history.length > 0 && (
         <div className="glass-strong rounded-2xl p-6 border border-white/10 shadow-glass-lg">
           <LotteryHistory

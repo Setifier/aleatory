@@ -1,13 +1,29 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { UserAuth } from "../context/AuthContext";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
+import LotteryModal from "../components/lottery/LotteryModal";
+import TournamentModal from "../components/tournament/TournamentModal";
+import HomeHistory from "../components/home/HomeHistory";
+import { LotteryItem } from "../hooks/useLottery";
 
 const Home = () => {
   const auth = UserAuth();
-  const navigate = useNavigate();
+  const [showLotteryModal, setShowLotteryModal] = useState(false);
+  const [showTournamentModal, setShowTournamentModal] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+  const [tournamentRefreshKey, setTournamentRefreshKey] = useState(0);
+  const [relaunchItems, setRelaunchItems] = useState<LotteryItem[] | undefined>();
+  const [relaunchTitle, setRelaunchTitle] = useState<string | undefined>();
+
+  const handleRelaunch = (items: LotteryItem[], title?: string) => {
+    setRelaunchItems(items);
+    setRelaunchTitle(title);
+    setShowLotteryModal(true);
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -109,7 +125,7 @@ const Home = () => {
               variant="gradient"
               hoverable
               clickable
-              onClick={() => navigate("/lottery")}
+              onClick={() => setShowLotteryModal(true)}
               className="group cursor-pointer"
             >
               <div className="relative overflow-hidden">
@@ -152,7 +168,7 @@ const Home = () => {
               variant="gradient"
               hoverable
               clickable
-              onClick={() => navigate("/tournament")}
+              onClick={() => setShowTournamentModal(true)}
               className="group cursor-pointer"
             >
               <div className="relative overflow-hidden">
@@ -191,6 +207,15 @@ const Home = () => {
             </Card>
           </motion.div>
 
+          {/* History Section */}
+          <motion.div variants={itemVariants}>
+            <HomeHistory
+              isAuthenticated={!!auth?.session}
+              refreshKey={historyRefreshKey + tournamentRefreshKey}
+              onRelaunch={handleRelaunch}
+            />
+          </motion.div>
+
           {/* Features Section */}
           <motion.div
             variants={itemVariants}
@@ -199,8 +224,8 @@ const Home = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <Card variant="glass" padding="md" hoverable>
                 <div className="text-center space-y-3">
-                  <div className="text-4xl">⚡</div>
-                  <h3 className="text-xl font-bold text-white">Ultra Rapide</h3>
+                  <div className="w-8 h-1 rounded-full bg-primary-400 mx-auto" />
+                  <h3 className="text-xl font-black text-white uppercase tracking-wider">Ultra Rapide</h3>
                   <p className="text-white/70 text-sm">
                     Résultats instantanés avec animations fluides
                   </p>
@@ -209,8 +234,8 @@ const Home = () => {
 
               <Card variant="glass" padding="md" hoverable>
                 <div className="text-center space-y-3">
-                  <div className="text-4xl">🔒</div>
-                  <h3 className="text-xl font-bold text-white">Sécurisé</h3>
+                  <div className="w-8 h-1 rounded-full bg-secondary-400 mx-auto" />
+                  <h3 className="text-xl font-black text-white uppercase tracking-wider">Sécurisé</h3>
                   <p className="text-white/70 text-sm">
                     Vos données sont protégées et sauvegardées
                   </p>
@@ -219,8 +244,8 @@ const Home = () => {
 
               <Card variant="glass" padding="md" hoverable>
                 <div className="text-center space-y-3">
-                  <div className="text-4xl">✨</div>
-                  <h3 className="text-xl font-bold text-white">
+                  <div className="w-8 h-1 rounded-full bg-primary-400 mx-auto" />
+                  <h3 className="text-xl font-black text-white uppercase tracking-wider">
                     Interface Moderne
                   </h3>
                   <p className="text-white/70 text-sm">
@@ -232,6 +257,25 @@ const Home = () => {
           </motion.div>
         </motion.div>
       </div>
+
+      <TournamentModal
+        isOpen={showTournamentModal}
+        onClose={() => setShowTournamentModal(false)}
+        onSaved={() => setTournamentRefreshKey((k) => k + 1)}
+      />
+
+      {/* Lottery modal — launched directly from home */}
+      <LotteryModal
+        isOpen={showLotteryModal}
+        initialItems={relaunchItems}
+        initialTitle={relaunchTitle}
+        onClose={() => {
+          setShowLotteryModal(false);
+          setRelaunchItems(undefined);
+          setRelaunchTitle(undefined);
+          setHistoryRefreshKey(k => k + 1);
+        }}
+      />
     </div>
   );
 };

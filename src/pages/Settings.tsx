@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { UserAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 import { logger } from "../lib/logger";
+import AnimatedBackground from "../components/ui/AnimatedBackground";
 import ProfileSection from "../components/settings/ProfileSection";
 import SecuritySection from "../components/settings/SecuritySection";
 import SessionSection from "../components/settings/SessionSection";
@@ -22,27 +24,16 @@ const Settings = () => {
   const handleSignOut = async () => {
     try {
       const result = await auth?.signOut();
-      if (result?.success) {
-        navigate("/signin");
-      }
+      if (result?.success) navigate("/signin");
     } catch (error) {
       logger.error("Sign out error", error);
     }
   };
 
   const savePendingEmailChange = useCallback(
-    (
-      data: {
-        oldEmail: string;
-        newEmail: string;
-        expiresAt: number;
-      } | null
-    ) => {
-      if (data) {
-        localStorage.setItem("pendingEmailChange", JSON.stringify(data));
-      } else {
-        localStorage.removeItem("pendingEmailChange");
-      }
+    (data: { oldEmail: string; newEmail: string; expiresAt: number } | null) => {
+      if (data) localStorage.setItem("pendingEmailChange", JSON.stringify(data));
+      else localStorage.removeItem("pendingEmailChange");
     },
     []
   );
@@ -51,17 +42,11 @@ const Settings = () => {
     try {
       const saved = localStorage.getItem("pendingEmailChange");
       return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }, []);
 
   const handleEmailChangeRequested = useCallback(
-    (pendingData: {
-      oldEmail: string;
-      newEmail: string;
-      expiresAt: number;
-    }) => {
+    (pendingData: { oldEmail: string; newEmail: string; expiresAt: number }) => {
       setPendingEmailChange(pendingData);
       savePendingEmailChange(pendingData);
       setShowEmailConfirmModal(true);
@@ -71,104 +56,85 @@ const Settings = () => {
 
   const checkEmailConfirmations = useCallback(() => {
     if (!pendingEmailChange || !auth?.session?.user) return;
-
-    const currentEmail = auth.session.user.email;
     const { newEmail, expiresAt } = pendingEmailChange;
-
     if (Date.now() > expiresAt) {
       setPendingEmailChange(null);
       savePendingEmailChange(null);
       return;
     }
-
-    if (currentEmail === newEmail) {
+    if (auth.session.user.email === newEmail) {
       setPendingEmailChange(null);
       savePendingEmailChange(null);
     }
   }, [pendingEmailChange, auth?.session?.user, savePendingEmailChange]);
 
   useEffect(() => {
-    const savedPending = loadPendingEmailChange();
-    if (savedPending) {
-      setPendingEmailChange(savedPending);
-    }
+    const saved = loadPendingEmailChange();
+    if (saved) setPendingEmailChange(saved);
   }, [loadPendingEmailChange]);
 
   useEffect(() => {
     if (!pendingEmailChange) return;
-
     checkEmailConfirmations();
-
-    const interval = setInterval(() => {
-      checkEmailConfirmations();
-    }, 5000);
-
+    const interval = setInterval(checkEmailConfirmations, 5000);
     return () => clearInterval(interval);
   }, [pendingEmailChange, checkEmailConfirmations]);
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
-        checkEmailConfirmations();
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") checkEmailConfirmations();
     });
-
     return () => subscription.unsubscribe();
   }, [checkEmailConfirmations]);
 
   if (!auth?.session) {
     return (
-      <div className="bg-secondary-50 min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg border max-w-md w-full text-center">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-            Connexion requise
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 mb-6">
-            Vous devez être connecté pour accéder aux paramètres.
-          </p>
-          <Link
-            to="/signin"
-            className="inline-flex items-center px-4 py-2 bg-primary-500 text-white font-medium rounded-md hover:bg-primary-600 transition-colors text-sm sm:text-base"
-          >
-            Se connecter
-          </Link>
+      <div className="relative min-h-screen overflow-hidden">
+        <AnimatedBackground variant="mesh" />
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+          <div className="rounded-2xl p-8 text-center max-w-md w-full"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <h1 className="text-2xl font-black text-white uppercase tracking-wide mb-3">
+              Connexion requise
+            </h1>
+            <p className="text-white/40 text-sm mb-6">
+              Vous devez être connecté pour accéder aux paramètres.
+            </p>
+            <Link to="/signin"
+              className="inline-flex items-center px-5 py-3 rounded-2xl bg-primary-500 hover:bg-primary-400 text-white font-bold text-sm transition-all">
+              Se connecter
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-secondary-50 min-h-screen p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="relative min-h-screen overflow-hidden">
+      <AnimatedBackground variant="mesh" />
+
+      <div className="relative z-10 max-w-4xl mx-auto py-8 sm:py-16 px-4">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500 mb-2">
-            <Link to="/" className="hover:text-gray-700">
-              Accueil
-            </Link>
-            <span>→</span>
-            <span>Paramètres</span>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="flex items-center gap-2 text-white/25 text-xs mb-4">
+            <Link to="/" className="hover:text-white/50 transition-colors">Accueil</Link>
+            <span>›</span>
+            <span className="text-white/50">Paramètres</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Paramètres
-          </h1>
-        </div>
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-primary-400 to-secondary-500" />
+            <h1 className="text-xl font-black text-white uppercase tracking-wide">Paramètres</h1>
+          </div>
+        </motion.div>
 
-        {/* Profile Section */}
-        <ProfileSection onEmailChangeRequested={handleEmailChangeRequested} />
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <ProfileSection onEmailChangeRequested={handleEmailChangeRequested} />
+          <SecuritySection />
+          <SessionSection onSignOut={handleSignOut} />
+          <AdvancedActionsSection />
+        </motion.div>
 
-        {/* Security Section */}
-        <SecuritySection />
-
-        {/* Session Section */}
-        <SessionSection onSignOut={handleSignOut} />
-
-        {/* Advanced Actions Section */}
-        <AdvancedActionsSection />
-
-        {/* Email Confirmation Modal */}
         {pendingEmailChange && (
           <EmailConfirmationModal
             isOpen={showEmailConfirmModal}

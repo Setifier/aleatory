@@ -6,29 +6,32 @@ const AdvancedActionsSection = () => {
 
   return (
     <>
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-red-800 mb-4 sm:mb-6">
-          Actions avancées
-        </h2>
+      <div className="rounded-2xl p-5 sm:p-6"
+        style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)" }}>
+        <h2 className="text-lg font-black text-white uppercase tracking-wide mb-5">Actions avancées</h2>
 
-        {/* Delete Account */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 p-4 border border-red-200 rounded-md bg-red-50">
+        <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl"
+          style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.12)" }}>
           <div>
-            <h3 className="font-medium text-red-900 text-sm sm:text-base">Supprimer le compte</h3>
-            <p className="text-xs sm:text-sm text-red-700">
-              Supprimer définitivement votre compte et toutes vos données
+            <p className="font-semibold text-white/90 text-sm">Supprimer le compte</p>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(252,165,165,0.55)" }}>
+              Suppression définitive de votre compte et toutes vos données
             </p>
           </div>
           <button
             onClick={() => setShowDeleteAccountModal(true)}
-            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm sm:text-base whitespace-nowrap"
+            className="px-4 py-2 rounded-xl font-bold text-sm transition-all flex-shrink-0"
+            style={{
+              background: "rgba(239,68,68,0.12)",
+              border: "1px solid rgba(239,68,68,0.25)",
+              color: "rgba(252,165,165,0.85)",
+            }}
           >
-            Supprimer le compte
+            Supprimer
           </button>
         </div>
       </div>
 
-      {/* Modal */}
       {showDeleteAccountModal && (
         <DeleteAccountModal
           isOpen={showDeleteAccountModal}

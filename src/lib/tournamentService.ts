@@ -9,6 +9,7 @@ import type {
   GroupsDrawResult,
   Group,
 } from "../types/groupsDraw";
+import type { TournamentMode, BracketSlot } from "../types/tournamentDraw";
 import { logSupabaseError } from "./logger";
 import * as Sentry from "@sentry/react";
 
@@ -451,4 +452,82 @@ export const deleteGroupsDraw = async (
   drawId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return deleteTournament(drawId);
+};
+
+export const saveTournamentDraw = async (opts: {
+  mode: TournamentMode;
+  title: string;
+  totalParticipants: number;
+  bracketMatchSize?: number;
+  groups?: Group[];
+  bracketSlots?: BracketSlot[];
+}): Promise<{ success: boolean; id?: string }> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false };
+
+    const format = opts.mode === "bracket" ? "bracket" : "group";
+    const title =
+      opts.title.trim() ||
+      `Tirage du ${new Date().toLocaleDateString("fr-FR")}`;
+
+    const { data: tournament, error: tErr } = await supabase
+      .from("tournaments")
+      .insert({
+        user_id: user.id,
+        title,
+        format,
+        status: "completed",
+        participant_count: opts.totalParticipants,
+        has_final_phase: opts.mode === "both",
+        participants_per_match: opts.bracketMatchSize,
+      })
+      .select()
+      .single();
+
+    if (tErr) {
+      logSupabaseError("saveTournamentDraw", tErr);
+      return { success: false };
+    }
+
+    const matches: Omit<TournamentMatch, "id" | "created_at">[] = [];
+
+    if (opts.groups && opts.groups.length > 0) {
+      opts.groups.forEach((group, gi) => {
+        group.participants.forEach((p, pi) => {
+          matches.push({
+            tournament_id: tournament.id,
+            stage: "group",
+            group_name: group.name,
+            match_number: gi * 100 + pi,
+            participants: [p.name],
+          });
+        });
+      });
+    }
+
+    if (opts.bracketSlots && opts.bracketSlots.length > 0) {
+      opts.bracketSlots
+        .filter((s) => s.participant)
+        .forEach((s) => {
+          matches.push({
+            tournament_id: tournament.id,
+            stage: "r32",
+            match_number: s.slotIndex,
+            participants: [s.participant!.name],
+          });
+        });
+    }
+
+    if (matches.length > 0) {
+      await supabase.from("tournament_matches").insert(matches);
+    }
+
+    return { success: true, id: tournament.id };
+  } catch (err) {
+    logSupabaseError("saveTournamentDraw unexpected", err);
+    return { success: false };
+  }
 };

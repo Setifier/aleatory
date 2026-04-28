@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import "./LotteryMachineCSS.css";
 
 interface LotteryMachineCSSProps {
@@ -8,134 +8,241 @@ interface LotteryMachineCSSProps {
   winner: string | null;
 }
 
+const ITEM_HEIGHT = 78;
+const GAP = 10;
+const ITEM_SLOT = ITEM_HEIGHT + GAP;
+const NUM_VISIBLE = 5;
+const VIEWPORT_HEIGHT = NUM_VISIBLE * ITEM_SLOT - GAP;
+const NUM_COPIES = 7;
+const WINNER_COPY = 3;
+const CENTER_OFFSET = (VIEWPORT_HEIGHT - ITEM_HEIGHT) / 2;
+
+const PARTICLE_COLORS = ["#ffd700", "#ffed4e", "#ff6b35", "#6161d8", "#a195f8", "#ff4488", "#44ffaa", "#bcb88f"];
+
 export default function LotteryMachineCSS({
   items,
   isDrawing,
   winner,
 }: LotteryMachineCSSProps) {
   const [showWinner, setShowWinner] = useState(false);
+  const [reelKey, setReelKey] = useState(0);
+  const prevDrawingRef = useRef(false);
 
-  // Couleur grise unique pour tous les items
-  const grayColor = {
-    base: "#6b7280",
-    dark: "#4b5563",
-    glow: "rgba(107, 114, 128, 0.5)",
-  };
-
-  // Créer des copies des items pour l'effet de boucle infinie
-  const itemsToRender = useMemo(() => {
-    const copies = [];
-    for (let i = 0; i < 5; i++) {
-      copies.push(...items);
+  const fullReel = useMemo(() => {
+    const reel: Array<{
+      id: string;
+      name: string;
+      uniqueKey: string;
+      reelIndex: number;
+    }> = [];
+    for (let copy = 0; copy < NUM_COPIES; copy++) {
+      items.forEach((item, j) => {
+        reel.push({
+          ...item,
+          uniqueKey: `${copy}-${item.id}`,
+          reelIndex: copy * items.length + j,
+        });
+      });
     }
-    return copies;
+    return reel;
   }, [items]);
 
+  const particleData = useMemo(
+    () =>
+      Array.from({ length: 60 }, (_, i) => ({
+        angle: (i / 60) * Math.PI * 2,
+        distance: 180 + Math.random() * 220,
+        color: PARTICLE_COLORS[i % PARTICLE_COLORS.length],
+        isRect: i % 4 === 0,
+        w: i % 5 === 0 ? 12 : 8,
+        h: i % 5 === 0 ? 5 : 8,
+        dx: (Math.random() - 0.5) * 120,
+        dy: (Math.random() - 0.5) * 120,
+        rotate: Math.random() * 720 - 360,
+        duration: 1.4 + Math.random() * 0.9,
+        delay: Math.random() * 0.3,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const winnerIndexInItems =
+    winner !== null ? items.findIndex((i) => i.name === winner) : -1;
+  const safeWinnerIndex = winnerIndexInItems >= 0 ? winnerIndexInItems : 0;
+  const winnerReelIndex = items.length * WINNER_COPY + safeWinnerIndex;
+
+  // y position where copy 1's first item is centered (rest state)
+  const restY =
+    items.length > 0
+      ? -(items.length * ITEM_SLOT) + CENTER_OFFSET
+      : CENTER_OFFSET;
+  // y position where winner is centered (draw target)
+  const targetY = -(winnerReelIndex * ITEM_SLOT) + CENTER_OFFSET;
+
+  // Trigger new animation when draw starts
+  useEffect(() => {
+    const drawJustStarted = isDrawing && !prevDrawingRef.current;
+    if (drawJustStarted && winner) {
+      setShowWinner(false);
+      setReelKey((k) => k + 1);
+    }
+    prevDrawingRef.current = isDrawing;
+  }, [isDrawing, winner]);
+
+  // Show winner effects after animation
   useEffect(() => {
     if (winner && isDrawing) {
-      // Afficher le gagnant après l'animation
-      setTimeout(() => {
-        setShowWinner(true);
-      }, 3500);
-    } else {
+      const timer = setTimeout(() => setShowWinner(true), 3400);
+      return () => clearTimeout(timer);
+    }
+    if (!winner) {
       setShowWinner(false);
     }
   }, [winner, isDrawing]);
 
   if (items.length === 0) {
     return (
-      <div className="w-full h-[400px] sm:h-[500px] flex items-center justify-center glass-strong rounded-2xl border border-white/10">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🎰</div>
-          <p className="text-white/60 text-lg">
-            Ajoutez des éléments pour voir la machine
-          </p>
-        </div>
+      <div className="lottery-empty">
+        <div className="text-6xl mb-4">🎰</div>
+        <p className="text-white/60 text-lg">
+          Ajoutez des éléments pour voir la machine
+        </p>
       </div>
     );
   }
 
-  // Trouver l'index du gagnant dans le tableau original
-  const winnerIndexOriginal = winner ? items.findIndex(item => item.name === winner) : 0;
-
-  // Le gagnant sera dans la copie du milieu (copie #2)
-  const winnerIndexInLoop = items.length > 0 ? winnerIndexOriginal + (items.length * 2) : 0;
-
   return (
-    <div className="relative w-full">
-      {/* Container Slot Machine */}
-      <div className="slot-machine-container">
-        {/* Cadre de la machine */}
-        <div className="slot-machine-frame">
-          {/* Ligne de victoire */}
-          <div className="win-line" />
+    <div className="lottery-wrapper">
+      <div className={`lottery-frame${showWinner ? " winner-active" : ""}`}>
+        {/* Left decorations */}
+        <div className="lottery-side">
+          {["★", "✦", "★"].map((s, i) => (
+            <motion.span
+              key={i}
+              className="lottery-star-icon"
+              animate={
+                showWinner
+                  ? {
+                      rotate: i % 2 === 0 ? [0, 360] : [0, -360],
+                      scale: [1, 1.4, 1],
+                    }
+                  : {}
+              }
+              transition={{
+                duration: 0.9 + i * 0.15,
+                repeat: showWinner ? Infinity : 0,
+                delay: i * 0.25,
+              }}
+            >
+              {s}
+            </motion.span>
+          ))}
+        </div>
 
-          {/* Colonne unique centrale */}
-          <div className="slot-column-single">
-            <div className="slot-reel" style={{ position: 'relative' }}>
-              {itemsToRender.map((item, index) => {
-                const isWinner = showWinner && index === winnerIndexInLoop;
+        {/* Viewport */}
+        <div className="lottery-viewport" style={{ height: VIEWPORT_HEIGHT }}>
+          {/* Fade overlays */}
+          <div className="lottery-fade-top" />
+          <div className="lottery-fade-bottom" />
 
-                // Position de repos : items distribués pour être visibles des deux côtés
-                // Commence 2 items au-dessus du viewport pour l'effet infini
-                const restPosition = -224 + (index * 112);
+          {/* Winner zone highlight */}
+          <div
+            className={`lottery-winner-zone${showWinner ? " active" : ""}`}
+            style={{ top: CENTER_OFFSET - 3, height: ITEM_HEIGHT + 6 }}
+          />
 
-                // Position finale : gagnant centré à 130px
-                const basePosition = 130;
-                const winnerPosition = basePosition - (winnerIndexInLoop * 112) + (index * 112);
-
+          {/* Reel */}
+          <div className="lottery-reel-clip">
+            <motion.div
+              key={reelKey}
+              className="lottery-reel"
+              initial={{ y: restY }}
+              animate={{ y: isDrawing && winner ? targetY : restY }}
+              transition={{
+                duration: isDrawing && winner ? 3.5 : 0.35,
+                ease:
+                  isDrawing && winner ? [0.05, 0.9, 0.08, 1.0] : "easeOut",
+              }}
+            >
+              {fullReel.map((item) => {
+                const isWinner =
+                  showWinner && item.reelIndex === winnerReelIndex;
                 return (
                   <motion.div
-                    key={`${item.id}-${index}`}
-                    className={`slot-ball ${isWinner ? "winner" : ""}`}
-                    style={{
-                      position: 'absolute',
-                      left: '10px',
-                      "--ball-color": isWinner ? "#ffd700" : grayColor.base,
-                      "--ball-color-dark": isWinner ? "#b8860b" : grayColor.dark,
-                      "--ball-glow": isWinner ? "rgba(255, 215, 0, 0.6)" : grayColor.glow,
-                    } as React.CSSProperties}
-                    animate={{
-                      top: isDrawing ? winnerPosition : restPosition,
-                    }}
-                    transition={{
-                      duration: isDrawing ? 3.5 : 0.3,
-                      ease: isDrawing ? [0.22, 1, 0.36, 1] : "easeOut",
-                    }}
+                    key={item.uniqueKey}
+                    className={`lottery-item${isWinner ? " lottery-item-winner" : ""}`}
+                    style={{ height: ITEM_HEIGHT, marginBottom: GAP }}
+                    animate={isWinner ? { scale: [1, 1.03, 1] } : {}}
+                    transition={
+                      isWinner
+                        ? { duration: 0.9, repeat: Infinity, ease: "easeInOut" }
+                        : {}
+                    }
                   >
-                    <div className="ball-text">{item.name.substring(0, 30)}</div>
+                    <span className="lottery-item-text">
+                      {item.name.substring(0, 35)}
+                    </span>
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </div>
+        </div>
+
+        {/* Right decorations */}
+        <div className="lottery-side lottery-side-right">
+          {["★", "✦", "★"].map((s, i) => (
+            <motion.span
+              key={i}
+              className="lottery-star-icon"
+              animate={
+                showWinner
+                  ? {
+                      rotate: i % 2 === 0 ? [0, -360] : [0, 360],
+                      scale: [1, 1.4, 1],
+                    }
+                  : {}
+              }
+              transition={{
+                duration: 0.9 + i * 0.15,
+                repeat: showWinner ? Infinity : 0,
+                delay: i * 0.25,
+              }}
+            >
+              {s}
+            </motion.span>
+          ))}
         </div>
       </div>
 
-      {/* Particules d'explosion */}
+      {/* Explosion particles */}
       <AnimatePresence>
         {showWinner && (
-          <div className="particles-container">
-            {[...Array(60)].map((_, i) => (
+          <div className="lottery-particles">
+            {particleData.map((p, i) => (
               <motion.div
                 key={i}
-                className="particle"
+                className="lottery-particle"
                 style={{
-                  background: i % 3 === 0 ? "#ffd700" : i % 3 === 1 ? "#ffed4e" : "#ff6b35",
+                  background: p.color,
+                  borderRadius: p.isRect ? "2px" : "50%",
+                  width: p.w,
+                  height: p.h,
                   left: "50%",
-                  top: "50%",
+                  top: "45%",
+                  position: "absolute",
                 }}
-                initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
+                initial={{ scale: 0, opacity: 1, x: 0, y: 0, rotate: 0 }}
                 animate={{
-                  scale: [0, 2, 1.5, 0],
+                  scale: [0, 1.8, 0.8, 0],
                   opacity: [1, 1, 0.6, 0],
-                  x: (Math.cos((i / 60) * Math.PI * 2) * 300) + (Math.random() - 0.5) * 150,
-                  y: (Math.sin((i / 60) * Math.PI * 2) * 300) + (Math.random() - 0.5) * 150,
-                  rotate: Math.random() * 720,
+                  x: Math.cos(p.angle) * p.distance + p.dx,
+                  y: Math.sin(p.angle) * p.distance + p.dy,
+                  rotate: p.rotate,
                 }}
                 transition={{
-                  duration: 1.8,
-                  delay: Math.random() * 0.4,
+                  duration: p.duration,
+                  delay: p.delay,
                   ease: "easeOut",
                 }}
               />
@@ -144,10 +251,10 @@ export default function LotteryMachineCSS({
         )}
       </AnimatePresence>
 
-      {/* Message nombre d'items */}
-      {items.length > 1 && (
+      {/* Participant count badge */}
+      {items.length >= 2 && (
         <motion.div
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 glass-dark px-4 py-2 rounded-lg border border-secondary-400/50 text-sm text-white/80"
+          className="lottery-count"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >

@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { LotteryResult } from "../../hooks/useLottery";
-import { generateDefaultTitle } from "../../lib/lotteryHistoryService";
 import Button from "../ui/Button";
 
 interface WinnerModalProps {
@@ -74,7 +73,7 @@ export default function WinnerModal({
 
             {/* Card */}
             <div className="relative glass-strong border-2 border-secondary-400 rounded-3xl p-8 sm:p-12 shadow-2xl">
-              {/* Trophée animé */}
+
               <motion.div
                 className="text-8xl sm:text-9xl text-center mb-6"
                 animate={{
@@ -127,7 +126,7 @@ export default function WinnerModal({
                 >
                   <p className="text-white/60 text-sm mb-1">Tirage</p>
                   <p className="text-white/90 font-semibold">
-                    {result.title || generateDefaultTitle(result.timestamp)}
+                    {result.title}
                   </p>
                 </motion.div>
               )}

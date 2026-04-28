@@ -4,6 +4,8 @@ import {
   saveItem,
   loadUserItems,
   deleteItem,
+  autoSaveItemToFolder,
+  toggleItemFolder,
   SavedItem,
 } from "../lib/savedItemsService";
 
@@ -76,6 +78,40 @@ export const useSavedItems = () => {
     [auth?.session]
   );
 
+  const handleToggleItemFolder = useCallback(
+    async (itemId: number, folderId: number, shouldAssign: boolean) => {
+      if (!auth?.session) return;
+
+      const result = await toggleItemFolder(itemId, folderId, shouldAssign);
+      if (result.success) {
+        setSavedItems((prev) =>
+          prev.map((item) => {
+            if (item.id !== itemId) return item;
+            const current = item.folder_ids ?? [];
+            const updated = shouldAssign
+              ? [...new Set([...current, folderId])]
+              : current.filter((id) => id !== folderId);
+            return { ...item, folder_ids: updated };
+          })
+        );
+      }
+    },
+    [auth?.session]
+  );
+
+  const autoSaveItemsToRecent = useCallback(
+    async (itemNames: string[], recentFolderId: number) => {
+      if (!auth?.session) return;
+
+      await Promise.all(
+        itemNames.map((name) => autoSaveItemToFolder(name, recentFolderId))
+      );
+
+      await loadSavedItems();
+    },
+    [auth?.session, loadSavedItems]
+  );
+
   useEffect(() => {
     if (auth?.session) {
       loadSavedItems();
@@ -92,6 +128,8 @@ export const useSavedItems = () => {
     savingItems,
     handleSaveItem,
     handleDeleteSavedItem,
+    handleToggleItemFolder,
+    autoSaveItemsToRecent,
     loadSavedItems,
   };
 };

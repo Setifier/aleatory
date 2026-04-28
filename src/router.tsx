@@ -6,7 +6,6 @@ import Signin from "./pages/Signin";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import Tournament from "./pages/Tournament";
 import Lottery from "./pages/Lottery";
 import LegalNotice from "./pages/LegalNotice";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -57,10 +56,6 @@ export const router = createBrowserRouter([
       {
         path: "lottery",
         element: <Lottery />,
-      },
-      {
-        path: "tournament",
-        element: <Tournament />,
       },
       {
         path: "legal-notice",

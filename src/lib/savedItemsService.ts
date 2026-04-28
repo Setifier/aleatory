@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient";
 import { normalizeText } from "./textUtils";
+import { getAuthUser, handleServiceError, PG_UNIQUE_VIOLATION } from "./serviceUtils";
 import { logSupabaseError } from "./logger";
-import * as Sentry from "@sentry/react";
 
 export type ItemFolderRelation = {
   folder_id: number;
@@ -25,147 +25,65 @@ export type SavedItem = {
   created_at: string;
 };
 
-export const checkItemExists = async (
-  itemName: string
-): Promise<{ exists: boolean; error?: string }> => {
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { exists: false, error: "Utilisateur non connecté" };
-    }
-
-    const normalizedName = normalizeText(itemName);
-
-    const { data, error } = await supabase
-      .from("saved_items")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("item_name", normalizedName)
-      .limit(1);
-
-    if (error) {
-      logSupabaseError("vérification existence item", error);
-      return { exists: false, error: error.message };
-    }
-
-    return { exists: data && data.length > 0 };
-  } catch (error) {
-    logSupabaseError("erreur inattendue", error);
-
-    Sentry.captureException(error, {
-      tags: {
-        service: 'savedItems',
-        action: 'checkExists'
-      },
-      extra: { itemName }
-    });
-
-    return { exists: false, error: "Erreur inattendue" };
-  }
-};
+const mapRawItem = (item: SavedItemRaw): SavedItem => ({
+  ...item,
+  folder_ids: (item.item_folders ?? []).map((r) => r.folder_id),
+});
 
 export const saveItem = async (
   itemName: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Not authenticated" };
 
-    if (!user) {
-      return { success: false, error: "Utilisateur non connecté" };
-    }
+    const name = normalizeText(itemName);
 
-    const normalizedName = normalizeText(itemName);
-    const existsResult = await checkItemExists(normalizedName);
-    if (existsResult.error) {
-      return { success: false, error: existsResult.error };
-    }
-    
-    if (existsResult.exists) {
-      return { success: false, error: `"${normalizedName}" est déjà enregistré` };
+    const { data: existing } = await supabase
+      .from("saved_items")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("item_name", name)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return { success: false, error: `"${name}" is already saved` };
     }
 
     const { error } = await supabase
       .from("saved_items")
-      .insert([
-        {
-          user_id: user.id,
-          item_name: normalizedName,
-        },
-      ])
-      .select();
+      .insert([{ user_id: user.id, item_name: name }]);
 
     if (error) {
-      logSupabaseError("sauvegarde item", error);
+      logSupabaseError("saveItem", error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
-  } catch (error) {
-    logSupabaseError("erreur inattendue", error);
-
-    Sentry.captureException(error, {
-      tags: {
-        service: 'savedItems',
-        action: 'save'
-      },
-      extra: { itemName }
-    });
-
-    return { success: false, error: "Erreur inattendue" };
+  } catch (err) {
+    return handleServiceError("saveItem", "savedItems", "save", err, { itemName });
   }
 };
 
-export const loadUserItems = async (): Promise<{
-  items: SavedItem[];
-  error?: string;
-}> => {
+export const loadUserItems = async (): Promise<{ items: SavedItem[]; error?: string }> => {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { items: [], error: "Utilisateur non connecté" };
-    }
+    const user = await getAuthUser();
+    if (!user) return { items: [] };
 
     const { data, error } = await supabase
       .from("saved_items")
-      .select(`
-        *,
-        item_folders (
-          folder_id
-        )
-      `)
+      .select("*, item_folders(folder_id)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
-      logSupabaseError("chargement items utilisateur", error);
+      logSupabaseError("loadUserItems", error);
       return { items: [], error: error.message };
     }
 
-    const itemsWithFolders: SavedItem[] = (data as SavedItemRaw[] || []).map(item => ({
-      ...item,
-      folder_ids: (item.item_folders || []).map((rel: ItemFolderRelation) => rel.folder_id)
-    }));
-
-    return { items: itemsWithFolders };
-  } catch (error) {
-    logSupabaseError("erreur inattendue", error);
-
-    Sentry.captureException(error, {
-      tags: {
-        service: 'savedItems',
-        action: 'load'
-      }
-    });
-
-    return { items: [], error: "Erreur inattendue" };
+    return { items: (data as SavedItemRaw[] ?? []).map(mapRawItem) };
+  } catch (err) {
+    return { items: [], ...handleServiceError("loadUserItems", "savedItems", "load", err) };
   }
 };
 
@@ -173,40 +91,23 @@ export const deleteItem = async (
   itemName: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "Utilisateur non connecté" };
-    }
-
-    const normalizedName = normalizeText(itemName);
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Not authenticated" };
 
     const { error } = await supabase
       .from("saved_items")
       .delete()
       .eq("user_id", user.id)
-      .eq("item_name", normalizedName);
+      .eq("item_name", normalizeText(itemName));
 
     if (error) {
-      logSupabaseError("suppression item", error);
+      logSupabaseError("deleteItem", error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
-  } catch (error) {
-    logSupabaseError("erreur inattendue", error);
-
-    Sentry.captureException(error, {
-      tags: {
-        service: 'savedItems',
-        action: 'delete'
-      },
-      extra: { itemName }
-    });
-
-    return { success: false, error: "Erreur inattendue" };
+  } catch (err) {
+    return handleServiceError("deleteItem", "savedItems", "delete", err, { itemName });
   }
 };
 
@@ -216,30 +117,19 @@ export const toggleItemFolder = async (
   shouldAssign: boolean
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "Utilisateur non connecté" };
-    }
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Not authenticated" };
 
     if (shouldAssign) {
       const { error } = await supabase
         .from("item_folders")
-        .insert({
-          item_id: itemId,
-          folder_id: folderId,
-          user_id: user.id
-        });
+        .insert({ item_id: itemId, folder_id: folderId, user_id: user.id });
 
-      if (error) {
-        if (error.code === '23505') {
-          return { success: true };
-        }
-        logSupabaseError("insertion relation item-dossier", error);
+      // Duplicate entry is not an error — item already belongs to this folder
+      if (error && error.code !== PG_UNIQUE_VIOLATION) {
+        logSupabaseError("toggleItemFolder insert", error);
         return { success: false, error: error.message };
       }
-
-      return { success: true };
     } else {
       const { error } = await supabase
         .from("item_folders")
@@ -249,116 +139,71 @@ export const toggleItemFolder = async (
         .eq("user_id", user.id);
 
       if (error) {
-        logSupabaseError("suppression relation item-dossier", error);
+        logSupabaseError("toggleItemFolder delete", error);
         return { success: false, error: error.message };
       }
-
-      return { success: true };
     }
-  } catch (error) {
-    logSupabaseError("erreur inattendue", error);
 
-    Sentry.captureException(error, {
-      tags: {
-        service: 'savedItems',
-        action: 'toggleFolder'
-      },
-      extra: { itemId, folderId, shouldAssign }
-    });
-
-    return { success: false, error: "Erreur inattendue" };
-  }
-};
-
-export const assignItemToFolder = async (
-  itemId: number,
-  folderId: number | null
-): Promise<{ success: boolean; error?: string }> => {
-  if (folderId === null) {
     return { success: true };
+  } catch (err) {
+    return handleServiceError("toggleItemFolder", "savedItems", "toggleFolder", err, {
+      itemId,
+      folderId,
+      shouldAssign,
+    });
   }
-
-  return toggleItemFolder(itemId, folderId, true);
 };
 
-export const getItemsByFolder = async (
-  folderId: number | null
-): Promise<{ success: boolean; error?: string; items?: SavedItem[] }> => {
+// Upserts an item into saved_items and links it to a folder.
+// Used for auto-save on draw — silently ignores duplicates.
+export const autoSaveItemToFolder = async (
+  itemName: string,
+  folderId: number
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Not authenticated" };
 
-    if (!user) {
-      return { success: false, error: "Utilisateur non connecté" };
-    }
+    const name = normalizeText(itemName);
 
-    if (folderId === null) {
-      const { data, error } = await supabase
-        .from("saved_items")
-        .select(`
-          *,
-          item_folders!left (
-            folder_id
-          )
-        `)
-        .eq("user_id", user.id)
-        .is("item_folders.folder_id", null)
-        .order("created_at", { ascending: false });
+    const { data: existing } = await supabase
+      .from("saved_items")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("item_name", name)
+      .limit(1);
 
-      if (error) {
-        logSupabaseError("récupération items sans dossier", error);
+    let itemId: number;
 
-        Sentry.captureException(error, {
-          tags: {
-            service: 'savedItems',
-            action: 'getByFolder',
-            folderType: 'none'
-          }
-        });
-
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, items: data || [] };
+    if (existing && existing.length > 0) {
+      itemId = existing[0].id;
     } else {
-      const { data, error } = await supabase
+      const { data: newItem, error: insertError } = await supabase
         .from("saved_items")
-        .select(`
-          *,
-          item_folders!inner (
-            folder_id
-          )
-        `)
-        .eq("user_id", user.id)
-        .eq("item_folders.folder_id", folderId)
-        .order("created_at", { ascending: false });
+        .insert([{ user_id: user.id, item_name: name }])
+        .select("id")
+        .single();
 
-      if (error) {
-        logSupabaseError("récupération items par dossier", error);
-
-        Sentry.captureException(error, {
-          tags: {
-            service: 'savedItems',
-            action: 'getByFolder',
-            folderId
-          }
-        });
-
-        return { success: false, error: error.message };
+      if (insertError) {
+        logSupabaseError("autoSaveItemToFolder insert", insertError);
+        return { success: false, error: insertError.message };
       }
-
-      return { success: true, items: data || [] };
+      itemId = newItem.id;
     }
-  } catch (error) {
-    logSupabaseError("erreur inattendue", error);
 
-    Sentry.captureException(error, {
-      tags: {
-        service: 'savedItems',
-        action: 'getByFolder'
-      },
-      extra: { folderId }
+    const { error: folderError } = await supabase
+      .from("item_folders")
+      .insert({ item_id: itemId, folder_id: folderId, user_id: user.id });
+
+    if (folderError && folderError.code !== PG_UNIQUE_VIOLATION) {
+      logSupabaseError("autoSaveItemToFolder link folder", folderError);
+    }
+
+    return { success: true };
+  } catch (err) {
+    return handleServiceError("autoSaveItemToFolder", "savedItems", "autoSave", err, {
+      itemName,
+      folderId,
     });
-
-    return { success: false, error: "Erreur inattendue" };
   }
 };
