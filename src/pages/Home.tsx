@@ -134,6 +134,7 @@ const Home = () => {
                   <motion.img
                     src="/assets/lottery_machine.webp"
                     alt="Lottery Machine"
+                    loading="lazy"
                     className="w-full h-full object-contain p-4"
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     transition={{ type: "spring", stiffness: 200 }}
@@ -177,6 +178,7 @@ const Home = () => {
                   <motion.img
                     src="/assets/trophy_vector.webp"
                     alt="Tournament Mode"
+                    loading="lazy"
                     className="w-full h-full object-contain p-4"
                     whileHover={{ scale: 1.1, rotate: -5 }}
                     transition={{ type: "spring", stiffness: 200 }}
