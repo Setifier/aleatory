@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { UserAuth } from "../context/AuthContext";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
@@ -11,6 +12,7 @@ import HomeHistory from "../components/home/HomeHistory";
 import { LotteryItem } from "../hooks/useLottery";
 
 const Home = () => {
+  usePageTitle("Tirage au sort & Tournois");
   const auth = UserAuth();
   const [showLotteryModal, setShowLotteryModal] = useState(false);
   const [showTournamentModal, setShowTournamentModal] = useState(false);

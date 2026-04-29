@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { supabase } from "../lib/supabaseClient";
 import Button from "../components/ui/Button";
 
 const ResetPassword = () => {
+  usePageTitle("Réinitialisation du mot de passe");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { usePageTitle } from "../hooks/usePageTitle";
 import Button from "../components/ui/Button";
 import {
   Link,
@@ -10,6 +11,7 @@ import { UserAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../lib/errorUtils";
 
 const Signin = () => {
+  usePageTitle("Connexion");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

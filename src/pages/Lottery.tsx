@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { UserAuth } from "../context/AuthContext";
 import { useSavedItems } from "../hooks/useSavedItems";
@@ -10,6 +11,7 @@ import AnimatedBackground from "../components/ui/AnimatedBackground";
 import Button from "../components/ui/Button";
 
 const Lottery = () => {
+  usePageTitle("Lottery Machine");
   const navigate = useNavigate();
   const auth = UserAuth();
 
