@@ -146,10 +146,13 @@ function FolderSection({
 
   return (
     <div className="border border-white/10 rounded-xl">
-      {/* Header */}
-      <button
+      {/* Header — outer div avoids invalid <button> nesting */}
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors text-left rounded-xl"
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
+        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors text-left rounded-xl cursor-pointer"
       >
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm">{isExpanded ? "📂" : "📁"}</span>
@@ -200,7 +203,7 @@ function FolderSection({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-      </button>
+      </div>
 
       {/* Items grid — 2 cols, scroll after 8 items (~4 rows × 34px) */}
       <AnimatePresence initial={false}>

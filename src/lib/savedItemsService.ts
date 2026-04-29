@@ -121,12 +121,16 @@ export const toggleItemFolder = async (
     if (!user) return { success: false, error: "Not authenticated" };
 
     if (shouldAssign) {
+      // upsert with ignoreDuplicates prevents a 409 network error when the
+      // relationship already exists (ON CONFLICT DO NOTHING at the DB level)
       const { error } = await supabase
         .from("item_folders")
-        .insert({ item_id: itemId, folder_id: folderId, user_id: user.id });
+        .upsert(
+          { item_id: itemId, folder_id: folderId, user_id: user.id },
+          { onConflict: "item_id,folder_id", ignoreDuplicates: true }
+        );
 
-      // Duplicate entry is not an error — item already belongs to this folder
-      if (error && error.code !== PG_UNIQUE_VIOLATION) {
+      if (error) {
         logSupabaseError("toggleItemFolder insert", error);
         return { success: false, error: error.message };
       }
