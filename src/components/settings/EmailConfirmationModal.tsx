@@ -8,45 +8,44 @@ interface EmailConfirmationModalProps {
   };
 }
 
-const EmailConfirmationModal = ({
-  isOpen,
-  onClose,
-  pendingEmailChange
-}: EmailConfirmationModalProps) => {
+const EmailConfirmationModal = ({ isOpen, onClose, pendingEmailChange }: EmailConfirmationModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}>
+      <div className="w-full max-w-md rounded-2xl p-6"
+        style={{ background: "rgba(10,10,38,0.98)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}>
+        <h3 className="text-base font-black text-white uppercase tracking-wide mb-5">
           📧 Changement d'email initié
         </h3>
 
-        <div className="space-y-3 text-sm text-gray-600 mb-6">
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <p className="font-medium text-blue-800 mb-2">Étape 1 :</p>
-            <p>Vérifiez <strong>{pendingEmailChange.newEmail}</strong></p>
-            <p>→ Cliquez sur le lien de confirmation</p>
+        <div className="space-y-2.5 mb-6">
+          <div className="px-4 py-3 rounded-xl"
+            style={{ background: "rgba(97,97,216,0.1)", border: "1px solid rgba(97,97,216,0.2)" }}>
+            <p className="font-bold text-primary-300 text-xs uppercase tracking-wider mb-1.5">Étape 1</p>
+            <p className="text-white/70 text-sm">Vérifiez <strong className="text-white">{pendingEmailChange.newEmail}</strong></p>
+            <p className="text-white/50 text-xs mt-0.5">→ Cliquez sur le lien de confirmation</p>
           </div>
 
-          <div className="bg-orange-50 p-3 rounded-lg">
-            <p className="font-medium text-orange-800 mb-2">Étape 2 :</p>
-            <p>Vérifiez <strong>{pendingEmailChange.oldEmail}</strong></p>
-            <p>→ Cliquez sur le lien de confirmation</p>
+          <div className="px-4 py-3 rounded-xl"
+            style={{ background: "rgba(232,149,42,0.08)", border: "1px solid rgba(232,149,42,0.2)" }}>
+            <p className="font-bold text-xs uppercase tracking-wider mb-1.5" style={{ color: "#f0b96a" }}>Étape 2</p>
+            <p className="text-white/70 text-sm">Vérifiez <strong className="text-white">{pendingEmailChange.oldEmail}</strong></p>
+            <p className="text-white/50 text-xs mt-0.5">→ Cliquez sur le lien de confirmation</p>
           </div>
 
-          <div className="bg-yellow-50 p-3 rounded-lg">
-            <p className="font-medium text-yellow-800">⚠️ Important :</p>
-            <p>
-              Vous serez déconnecté après validation des 2 emails.
-              Reconnectez-vous avec votre nouvelle adresse.
+          <div className="px-4 py-3 rounded-xl"
+            style={{ background: "rgba(255,215,0,0.06)", border: "1px solid rgba(255,215,0,0.15)" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(255,215,0,0.7)" }}>
+              ⚠️ Vous serez déconnecté après validation des 2 emails. Reconnectez-vous avec votre nouvelle adresse.
             </p>
           </div>
         </div>
 
         <button
           onClick={onClose}
-          className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors font-medium"
+          className="w-full py-3 rounded-xl bg-primary-500 hover:bg-primary-400 text-white font-bold text-sm transition-all"
         >
           J'ai compris
         </button>

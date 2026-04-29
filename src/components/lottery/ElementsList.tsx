@@ -2,21 +2,13 @@ import { LotteryItem } from "../../hooks/useLottery";
 
 interface ElementsListProps {
   items: LotteryItem[];
-  isAuthenticated: boolean;
-  savedItemsNames: Set<string>;
-  savingItems: Set<string>;
   onRemoveItem: (itemId: string) => void;
-  onSaveItem: (itemName: string) => Promise<boolean>;
   onClearItems: () => void;
 }
 
 const ElementsList = ({
   items,
-  isAuthenticated,
-  savedItemsNames,
-  savingItems,
   onRemoveItem,
-  onSaveItem,
   onClearItems,
 }: ElementsListProps) => {
   if (items.length === 0) return null;
@@ -45,51 +37,21 @@ const ElementsList = ({
             key={item.id}
             className="group relative bg-accent-700/50 backdrop-blur-sm border border-accent-600 rounded-lg p-2.5 sm:p-4 hover:bg-accent-600/50 transition-all duration-300"
           >
-
             <div className="absolute -top-2 -left-2 w-5 h-5 sm:w-6 sm:h-6 bg-primary-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
               {index + 1}
             </div>
 
             <div className="flex justify-between items-center">
-              <span className="text-white font-medium flex-1 mr-2 sm:mr-3 flex items-center gap-2 text-sm sm:text-base break-words">
+              <span className="text-white font-medium flex-1 mr-2 sm:mr-3 text-sm sm:text-base break-words">
                 {item.name}
               </span>
-
-              <div className="flex items-center gap-2">
-
-                {isAuthenticated && (
-                  <>
-                    {savingItems.has(item.name) ? (
-                      <div
-                        className="text-blue-300 animate-spin"
-                        title="Sauvegarde..."
-                      >
-                        ⏳
-                      </div>
-                    ) : savedItemsNames.has(item.name) ? (
-                      <div className="text-green-300" title="Déjà sauvegardé">
-                        ✓
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => onSaveItem(item.name)}
-                        className="text-accent-300 hover:text-green-300 transition-colors"
-                        title="Sauvegarder"
-                      >
-                        💾
-                      </button>
-                    )}
-                  </>
-                )}
-
-                <button
-                  onClick={() => onRemoveItem(item.id)}
-                  className="text-accent-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                  title="Retirer"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                onClick={() => onRemoveItem(item.id)}
+                className="text-accent-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                title="Retirer"
+              >
+                ✕
+              </button>
             </div>
           </div>
         ))}

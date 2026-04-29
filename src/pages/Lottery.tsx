@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { UserAuth } from "../context/AuthContext";
 import { useSavedItems } from "../hooks/useSavedItems";
 import { useFolders } from "../hooks/useFolders";
 
 import LotterySection from "../components/lottery/LotterySection";
-import ItemsLibrary from "../components/library/ItemsLibrary";
+import AnimatedBackground from "../components/ui/AnimatedBackground";
+import Button from "../components/ui/Button";
 
 const Lottery = () => {
   const navigate = useNavigate();
@@ -13,51 +15,41 @@ const Lottery = () => {
 
   const {
     savedItems,
-    savedItemsSet,
     loadingSavedItems,
-    savingItems,
-    handleSaveItem,
     handleDeleteSavedItem,
-    loadSavedItems,
+    handleToggleItemFolder,
+    autoSaveItemsToRecent,
   } = useSavedItems();
 
   const {
-    folders,
-    loadingFolders,
+    recentFolder,
+    otherFolders,
     handleCreateFolder,
     handleDeleteFolder,
-    handleAddFolder,
-    loadFolders,
   } = useFolders();
 
   const [currentLotteryItems, setCurrentLotteryItems] = useState<string[]>([]);
 
-  const handleAddToLottery = (itemName: string) => {
-    const event = new CustomEvent("addItemToLottery", {
-      detail: { itemName },
-    });
-    window.dispatchEvent(event);
-  };
-
-  const handleFolderAssignmentChange = () => {
-    loadSavedItems();
-    loadFolders();
-
-    const event = new CustomEvent("foldersChanged");
-    window.dispatchEvent(event);
-  };
-
   return (
-    <div className="bg-gradient-to-br from-secondary-50 via-white to-accent-50 min-h-screen">
-      <div className="max-w-7xl mx-auto py-8 px-4">
+    <div className="relative min-h-screen overflow-hidden">
+      <AnimatedBackground variant="mesh" />
+
+      <div className="relative z-10 max-w-7xl mx-auto py-8 px-4">
         {/* Header */}
-        <div className="mb-8">
-          <button
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Button
             onClick={() => navigate("/")}
-            className="text-accent-600 hover:text-accent-800 flex items-center gap-2 mb-4 transition-colors p-2"
+            variant="ghost"
+            size="md"
+            className="group"
           >
             <svg
-              className="w-8 h-8 md:w-5 md:h-5"
+              className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -69,54 +61,56 @@ const Lottery = () => {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            <span className="hidden md:inline">Retour à l'accueil</span>
-          </button>
-        </div>
+            Retour à l'accueil
+          </Button>
+        </motion.div>
 
-        <div className="text-center mb-6">
-          <div className="relative inline-block">
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent mb-2">
-              LOTTERY MACHINE
-            </h2>
-          </div>
-          <p className="text-accent-600 text-sm sm:text-base md:text-lg">
+        {/* Title */}
+        <motion.div
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4">
+            <span className="gradient-text">LOTTERY MACHINE</span>
+          </h1>
+          <motion.p
+            className="text-lg sm:text-xl text-white/80"
+            key={currentLotteryItems.length}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
             {currentLotteryItems.length === 0
               ? "Ajoutez des éléments pour commencer"
               : currentLotteryItems.length === 1
               ? "Ajoutez au moins 1 élément de plus"
               : `${currentLotteryItems.length} éléments prêts pour le tirage`}
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
-        {auth?.session && (
-          <div className="max-w-4xl mx-auto mb-6">
-            <ItemsLibrary
-              savedItems={savedItems}
-              loadingSavedItems={loadingSavedItems}
-              savingItems={savingItems}
-              lotteryItems={currentLotteryItems}
-              onSaveItem={handleSaveItem}
-              onDeleteItem={handleDeleteSavedItem}
-              onAddItemToLottery={handleAddToLottery}
-              folders={folders}
-              loadingFolders={loadingFolders}
-              onCreateFolder={handleCreateFolder}
-              onDeleteFolder={handleDeleteFolder}
-              onAddFolder={handleAddFolder}
-              onRefreshItems={handleFolderAssignmentChange}
-            />
-          </div>
-        )}
-
-        <div className="max-w-4xl mx-auto">
+        {/* Main Lottery Section */}
+        <motion.div
+          className="max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
           <LotterySection
-            onSaveItem={auth?.session ? handleSaveItem : undefined}
-            savedItemsNames={savedItemsSet}
-            savingItems={savingItems}
             isAuthenticated={!!auth?.session}
             onLotteryItemsChange={setCurrentLotteryItems}
+            savedItems={savedItems}
+            recentFolder={recentFolder}
+            otherFolders={otherFolders}
+            loadingItems={loadingSavedItems}
+            onDeleteItem={handleDeleteSavedItem}
+            onCreateFolder={handleCreateFolder}
+            onDeleteFolder={handleDeleteFolder}
+            onToggleItemFolder={handleToggleItemFolder}
+            onAutoSaveToRecent={autoSaveItemsToRecent}
           />
-        </div>
+        </motion.div>
       </div>
     </div>
   );

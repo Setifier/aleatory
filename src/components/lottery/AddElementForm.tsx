@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import InputField from "../ui/InputField";
 import { normalizeText } from "../../lib/textUtils";
 
@@ -13,21 +14,37 @@ const AddElementForm = ({
   onDismissError,
 }: AddElementFormProps) => {
   const handleAddItem = (itemName: string) => {
-    const normalizedItem = normalizeText(itemName); // ✅ Normalize ici
+    const normalizedItem = normalizeText(itemName);
     onAddItem(normalizedItem);
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-secondary-50 rounded-xl p-4 sm:p-6 border-2 border-secondary-200 shadow-lg">
-      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-primary-400 rounded-full animate-pulse"></div>
-        <h3 className="text-base sm:text-lg md:text-xl font-semibold text-accent-800">
+    <div>
+      <motion.div
+        className="flex items-center gap-3 mb-4"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.div
+          className="w-3 h-3 bg-primary-400 rounded-full shadow-glow-sm"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.7, 1, 0.7],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <h3 className="text-lg sm:text-xl font-bold text-white">
           Ajouter un élément
         </h3>
-      </div>
+      </motion.div>
 
       <InputField
-        onAddItem={handleAddItem} // ✅ Passe la fonction wrapper
+        onAddItem={handleAddItem}
         placeholder="Entrez votre choix..."
         buttonLabel="➕ Ajouter"
         errorMessage={error}

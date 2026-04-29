@@ -15,12 +15,12 @@ This guide covers the complete deployment process for Aleatory on Vercel with do
 
 Set these environment variables in your Vercel project settings:
 
-| Variable | Description | Example | Where to find |
-|----------|-------------|---------|---------------|
-| `VITE_SUPABASE_URL` | Supabase project URL | `https://xxxxx.supabase.co` | Supabase Dashboard → Settings → API → Project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key | `eyJhbGc...` | Supabase Dashboard → Settings → API → Project API keys → anon public |
-| `VITE_SENTRY_DSN` | Sentry Data Source Name | `https://xxxxx@sentry.io/xxxxx` | Sentry → Project Settings → Client Keys (DSN) |
-| `VITE_APP_VERSION` | Application version | `1.0.0` | Match package.json version |
+| Variable                 | Description                   | Example                         | Where to find                                                        |
+| ------------------------ | ----------------------------- | ------------------------------- | -------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`      | Supabase project URL          | `https://xxxxx.supabase.co`     | Supabase Dashboard → Settings → API → Project URL                    |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key | `eyJhbGc...`                    | Supabase Dashboard → Settings → API → Project API keys → anon public |
+| `VITE_SENTRY_DSN`        | Sentry Data Source Name       | `https://xxxxx@sentry.io/xxxxx` | Sentry → Project Settings → Client Keys (DSN)                        |
+| `VITE_APP_VERSION`       | Application version           | `1.0.0`                         | Match package.json version                                           |
 
 ### How to set on Vercel
 
@@ -50,6 +50,7 @@ In Supabase Dashboard → Authentication → URL Configuration, add:
 **Site URL**: `https://aleatory.fr`
 
 **Redirect URLs** (add all):
+
 - `https://aleatory.fr`
 - `https://aleatory.fr/reset-password`
 - `https://www.aleatory.fr` (if using www subdomain)
@@ -58,12 +59,14 @@ In Supabase Dashboard → Authentication → URL Configuration, add:
 ### Email Templates
 
 Update email templates to use production domain:
+
 - Reset Password: `https://aleatory.fr/reset-password`
 - Email Confirmation: `https://aleatory.fr`
 
 ### Database Security
 
 Ensure Row Level Security (RLS) policies are enabled on all tables:
+
 - `saved_items`
 - `folders`
 - `lottery_history`
@@ -101,6 +104,7 @@ For better error tracking, upload source maps:
 
 1. Install Sentry CLI: `npm install -D @sentry/cli`
 2. Add to package.json scripts:
+
 ```json
 "build:production": "npm run build && sentry-cli sourcemaps upload --org your-org --project aleatory ./dist"
 ```
@@ -215,6 +219,7 @@ Vercel automatically deploys when you push to your main branch:
 ### Security Headers
 
 The `vercel.json` configuration includes security headers:
+
 - X-Content-Type-Options: Prevents MIME sniffing
 - X-Frame-Options: Prevents clickjacking
 - X-XSS-Protection: Enables XSS filtering
@@ -238,6 +243,7 @@ The `vercel.json` configuration includes security headers:
 ### Database Backups
 
 Supabase provides automatic daily backups. Manual backups:
+
 1. Go to Supabase Dashboard → Database → Backups
 2. Download backup or restore from point-in-time
 
@@ -249,4 +255,4 @@ Supabase provides automatic daily backups. Manual backups:
 
 ## Version History
 
-- v1.0.0 (Novembre 2025) - Initial production release
+- v1.0.0 (November 2025) - Initial production release

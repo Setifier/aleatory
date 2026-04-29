@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import Button from "../ui/Button";
 
 interface DrawButtonProps {
@@ -7,31 +8,41 @@ interface DrawButtonProps {
 }
 
 const DrawButton = ({ itemsCount, isDrawing, onDraw }: DrawButtonProps) => {
+  const getButtonText = () => {
+    if (isDrawing) return "🎯 TIRAGE EN COURS...";
+    if (itemsCount === 0) return "⚠️ Ajoutez des éléments";
+    if (itemsCount === 1) return "⚠️ Ajoutez au moins 1 élément de plus";
+    return `🎰 LANCER LE TIRAGE ! (${itemsCount} éléments)`;
+  };
+
   return (
     <div className="text-center">
-      <Button
-        onClick={onDraw}
-        disabled={itemsCount < 2 || isDrawing}
-        label={
-          isDrawing
-            ? "🎯 TIRAGE EN COURS..."
-            : itemsCount === 0
-            ? "⚠️ Ajoutez des éléments"
-            : itemsCount === 1
-            ? "⚠️ Ajoutez au moins 1 élément de plus"
-            : `🎰 LANCER LE TIRAGE ! (${itemsCount} éléments)`
-        }
-        className={`
-          text-xl px-8 py-4 font-bold rounded-xl transform transition-all duration-300 shadow-xl
-          ${
-            itemsCount < 2
-              ? "bg-gray-400 cursor-not-allowed"
-              : isDrawing
-              ? "bg-primary-600 scale-105 animate-pulse cursor-wait"
-              : "bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 hover:scale-105 active:scale-95"
-          }
-        `}
-      />
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Button
+          onClick={onDraw}
+          disabled={itemsCount < 2 || isDrawing}
+          variant="gradient"
+          size="lg"
+          withGlow={itemsCount >= 2 && !isDrawing}
+          className={`
+            text-xl sm:text-2xl px-8 sm:px-12 py-4 sm:py-5 font-bold w-full sm:w-auto
+            ${isDrawing ? "animate-glow-pulse" : ""}
+          `}
+        >
+          <motion.span
+            key={getButtonText()}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {getButtonText()}
+          </motion.span>
+        </Button>
+      </motion.div>
     </div>
   );
 };

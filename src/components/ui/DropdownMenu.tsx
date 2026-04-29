@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface DropdownMenuItem {
   label: string;
@@ -52,7 +53,7 @@ const DropdownMenu = ({
 
   return (
     <div ref={menuRef}>
-      <button
+      <motion.button
         ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
@@ -67,40 +68,50 @@ const DropdownMenu = ({
 
           setIsOpen(!isOpen);
         }}
-        className="p-1 text-accent-400 hover:text-accent-600 hover:bg-accent-100 rounded transition-colors"
+        className="p-1.5 text-white/70 hover:text-white glass-dark hover:glass-strong rounded-lg transition-all"
         aria-label="Menu"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
         <span className="text-lg font-bold">{triggerIcon}</span>
-      </button>
+      </motion.button>
 
-      {isOpen && (
-        <div
-          className="fixed w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] overflow-hidden"
-          style={{
-            top: `${menuPosition.top}px`,
-            left: `${menuPosition.left}px`,
-          }}
-        >
-          {items.map((item, index) => (
-            <button
-              key={index}
-              onClick={(e) => {
-                e.stopPropagation();
-                item.onClick();
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors ${
-                item.variant === "danger"
-                  ? "text-red-600 hover:bg-red-50"
-                  : "text-accent-700 hover:bg-accent-50"
-              }`}
-            >
-              {item.icon && <span>{item.icon}</span>}
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed w-44 glass-strong border border-white/10 rounded-xl shadow-glass-lg z-[100] overflow-hidden"
+            style={{
+              top: `${menuPosition.top}px`,
+              left: `${menuPosition.left}px`,
+            }}
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ duration: 0.15 }}
+          >
+            {items.map((item, index) => (
+              <motion.button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  item.onClick();
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-all ${
+                  item.variant === "danger"
+                    ? "text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                    : "text-white/90 hover:bg-white/10 hover:text-white"
+                }`}
+                whileHover={{ x: 4 }}
+                transition={{ duration: 0.15 }}
+              >
+                {item.icon && <span>{item.icon}</span>}
+                <span>{item.label}</span>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

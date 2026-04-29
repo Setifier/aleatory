@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import ErrorMessage from "./ErrorMessage";
+import Button from "./Button";
 
 interface InputFieldProps {
   onAddItem: (item: string) => void;
@@ -19,6 +21,7 @@ const InputField = ({
   disabled = false,
 }: InputFieldProps) => {
   const [inputValue, setInputValue] = useState<string>("");
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,44 +48,68 @@ const InputField = ({
   );
 
   return (
-    <div>
+    <div className="space-y-3">
       <ErrorMessage
         message={errorMessage || null}
         onDismiss={onDismissError}
         duration={4000}
       />
 
-      <div className="flex items-center">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
-          disabled={disabled}
-          className={`border p-2 flex-1 rounded-lg sm:rounded-sm focus:outline-none focus:ring-2 text-sm sm:text-base ${
-            errorMessage
-              ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-              : "border-secondary-300 focus:ring-primary-500 focus:border-primary-500"
-          } ${
-            disabled
-              ? "bg-secondary-100 text-secondary-500 cursor-not-allowed"
-              : ""
-          }`}
-          placeholder={placeholder}
-        />
-        <button
-          onClick={handleAddClick}
-          disabled={disabled}
-          className={`px-3 py-2 sm:px-4 rounded-xl sm:rounded-sm ml-2 transition-colors duration-200 text-lg sm:text-base ${
-            disabled
-              ? "bg-secondary-300 text-secondary-500 cursor-not-allowed"
-              : "bg-secondary-500 text-white hover:bg-secondary-600"
-          }`}
-          title={buttonLabel}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <motion.div
+          className="flex-1 relative"
+          animate={{
+            scale: isFocused ? 1.01 : 1,
+          }}
+          transition={{ duration: 0.2 }}
         >
-          <span className="sm:hidden">{buttonLabel.split(' ')[0]}</span>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            onKeyPress={handleKeyPress}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            disabled={disabled}
+            className={`
+              w-full px-4 py-3 rounded-xl
+              bg-white/10 backdrop-blur-sm
+              border-2 transition-all duration-300
+              text-white placeholder-white/50
+              focus:outline-none
+              ${
+                errorMessage
+                  ? "border-red-400 focus:border-red-300 focus:shadow-glow-md"
+                  : "border-white/20 focus:border-primary-400 focus:shadow-glow-sm"
+              }
+              ${
+                disabled
+                  ? "bg-white/5 text-white/40 cursor-not-allowed"
+                  : "hover:border-white/30"
+              }
+            `}
+            placeholder={placeholder}
+          />
+          {isFocused && (
+            <motion.div
+              className="absolute inset-0 rounded-xl border-2 border-primary-400/50 pointer-events-none"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            />
+          )}
+        </motion.div>
+
+        <Button
+          onClick={handleAddClick}
+          disabled={disabled || !inputValue.trim()}
+          variant="secondary"
+          size="md"
+          className="px-4 sm:px-6"
+        >
+          <span className="sm:hidden">{buttonLabel.split(" ")[0]}</span>
           <span className="hidden sm:inline">{buttonLabel}</span>
-        </button>
+        </Button>
       </div>
     </div>
   );
