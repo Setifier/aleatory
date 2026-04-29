@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { normalizeText } from "./textUtils";
-import { getAuthUser, handleServiceError } from "./serviceUtils";
+import { getAuthUser, handleServiceError, PG_UNIQUE_VIOLATION } from "./serviceUtils";
 import { logSupabaseError } from "./logger";
 
 // Reserved folder names — auto-created on first load, auto-populated on every draw
@@ -103,6 +103,17 @@ export const getOrCreateRecentFolder = async (): Promise<FolderItem | null> => {
       .single();
 
     if (error) {
+      // Race condition: another concurrent call already created the folder — fetch it
+      if (error.code === PG_UNIQUE_VIOLATION) {
+        const { data: existing } = await supabase
+          .from("folders")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("folder_name", RECENT_FOLDER_NAME)
+          .limit(1)
+          .single();
+        return existing ?? null;
+      }
       logSupabaseError("getOrCreateRecentFolder", error);
       return null;
     }
@@ -135,6 +146,17 @@ export const getOrCreateTournamentRecentFolder = async (): Promise<FolderItem | 
       .single();
 
     if (error) {
+      // Race condition: another concurrent call already created the folder — fetch it
+      if (error.code === PG_UNIQUE_VIOLATION) {
+        const { data: existing } = await supabase
+          .from("folders")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("folder_name", TOURNAMENT_RECENT_FOLDER_NAME)
+          .limit(1)
+          .single();
+        return existing ?? null;
+      }
       logSupabaseError("getOrCreateTournamentRecentFolder", error);
       return null;
     }
