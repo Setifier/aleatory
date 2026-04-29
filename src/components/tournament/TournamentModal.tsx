@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useModalA11y } from "../../hooks/useModalA11y";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserAuth } from "../../context/AuthContext";
@@ -81,6 +82,9 @@ export default function TournamentModal({ isOpen, onClose, onSaved }: Tournament
     onClose();
   };
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalA11y(isOpen, handleClose, dialogRef);
+
   const handleStartDraw = () => {
     if (isAuthenticated && tournamentRecentFolder) {
       autoSaveItemsToRecent(
@@ -114,6 +118,10 @@ export default function TournamentModal({ isOpen, onClose, onSaved }: Tournament
           onClick={handleClose}
         >
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tournament-modal-title"
             className={`relative w-full flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl ${
               draw.phase >= 3 ? "sm:max-w-3xl" : "sm:max-w-md"
             }`}
@@ -153,7 +161,7 @@ export default function TournamentModal({ isOpen, onClose, onSaved }: Tournament
                       />
                     ))}
                   </div>
-                  <span className="text-white/40 text-sm">
+                  <span id="tournament-modal-title" className="text-white/40 text-sm">
                     {draw.mode && draw.phase > 1
                       ? `${modeLabel(draw.mode)} · ${PHASE_LABELS[draw.phase]}`
                       : PHASE_LABELS[draw.phase]}
@@ -161,6 +169,7 @@ export default function TournamentModal({ isOpen, onClose, onSaved }: Tournament
                 </div>
                 <button
                   onClick={handleClose}
+                  aria-label="Fermer"
                   className="w-9 h-9 flex items-center justify-center rounded-full bg-white/6 hover:bg-white/12 text-white/50 hover:text-white transition-all"
                 >
                   ✕

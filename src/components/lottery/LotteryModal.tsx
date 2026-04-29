@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useModalA11y } from "../../hooks/useModalA11y";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserAuth } from "../../context/AuthContext";
@@ -45,6 +46,7 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
   const spinTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentResultRef = useRef<LotteryResult | null>(null);
   const titleRef         = useRef<HTMLInputElement>(null);
+  const dialogRef        = useRef<HTMLDivElement>(null);
 
   const {
     items, currentResult, isDrawing, error,
@@ -138,6 +140,8 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
     onClose();
   };
 
+  useModalA11y(isOpen, handleClose, dialogRef);
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && inputValue.trim()) {
       handleAddItem(inputValue.trim());
@@ -159,6 +163,10 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
           onClick={handleClose}
         >
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="lottery-modal-title"
             className="relative w-full sm:max-w-md flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden"
             style={{
               maxHeight: "calc(100vh - 96px)",
@@ -192,10 +200,11 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
                     />
                   ))}
                 </div>
-                <span className="text-white/40 text-sm">{STEP_LABELS[step]}</span>
+                <span id="lottery-modal-title" className="text-white/40 text-sm">{STEP_LABELS[step]}</span>
               </div>
               <button
                 onClick={handleClose}
+                aria-label="Fermer"
                 className="w-9 h-9 flex items-center justify-center rounded-full bg-white/6 hover:bg-white/12 text-white/50 hover:text-white transition-all text-base"
               >
                 ✕
