@@ -4,7 +4,7 @@ import type { Participant } from "../../types/tournamentDraw";
 import type { TournamentMode } from "../../types/tournamentDraw";
 import type { SavedItem } from "../../lib/savedItemsService";
 import type { FolderItem } from "../../lib/foldersService";
-import InlineLibrary from "../library/InlineLibrary";
+import LibraryPickerModal from "../library/LibraryPickerModal";
 
 interface ParticipantsPhaseProps {
   mode: TournamentMode;
@@ -46,6 +46,7 @@ export default function ParticipantsPhase({
   onToggleItemFolder,
 }: ParticipantsPhaseProps) {
   const [inputValue, setInputValue] = useState("");
+  const [showLibraryPicker, setShowLibraryPicker] = useState(false);
 
   const handleAdd = () => {
     const trimmed = inputValue.trim();
@@ -103,25 +104,36 @@ export default function ParticipantsPhase({
         </AnimatePresence>
       </div>
 
-      {/* Library */}
+      {/* Library button */}
       {isAuthenticated && (
-        <div className="max-h-[200px] overflow-y-auto rounded-xl">
-          <InlineLibrary
-            savedItems={savedItems}
-            recentFolder={tournamentRecentFolder}
-            otherFolders={otherFolders}
-            lotteryItems={participants.map((p) => p.name)}
-            loadingItems={loadingItems}
-            onAddItemToLottery={(name) => onToggle(name)}
-            onDeleteItem={onDeleteSavedItem}
-            onCreateFolder={onCreateFolder}
-            onDeleteFolder={onDeleteFolder}
-            onToggleItemFolder={onToggleItemFolder}
-          />
-        </div>
+        <button
+          onClick={() => setShowLibraryPicker(true)}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all"
+          style={{
+            background: "rgba(121,101,224,0.07)",
+            border: "1px solid rgba(121,101,224,0.2)",
+          }}
+        >
+          <div
+            className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(121,101,224,0.18)" }}
+          >
+            <svg className="w-3.5 h-3.5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+            </svg>
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-semibold text-primary-300">Bibliothèque</p>
+            <p className="text-xs text-white/35">Importer depuis vos dossiers</p>
+          </div>
+          <svg className="w-4 h-4 text-white/25 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       )}
 
-      {/* Participants list */}
+      {/* Participants list — multi-column when many */}
       <AnimatePresence>
         {participants.length > 0 && (
           <motion.div
@@ -134,9 +146,7 @@ export default function ParticipantsPhase({
               <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
                 Liste · {participants.length}
                 {participants.length < minParticipants && (
-                  <span className="text-red-400 ml-2">
-                    (min {minParticipants})
-                  </span>
+                  <span className="text-red-400 ml-2">(min {minParticipants})</span>
                 )}
               </span>
               <button
@@ -146,33 +156,64 @@ export default function ParticipantsPhase({
                 Tout vider
               </button>
             </div>
-            <div className="space-y-1.5 max-h-[180px] overflow-y-auto">
-              {participants.map((p, idx) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-black/25 border border-white/8 group"
+            {(() => {
+              const n = participants.length;
+              const cols = n <= 8 ? 1 : n <= 16 ? 2 : 3;
+              return (
+                <div
+                  className="grid gap-x-2 gap-y-1.5"
+                  style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
                 >
-                  <span className="text-primary-400 font-bold text-xs w-5 text-center flex-shrink-0">
-                    {idx + 1}
-                  </span>
-                  <span className="flex-1 text-white font-medium text-sm truncate">
-                    {p.name}
-                  </span>
-                  <button
-                    onClick={() => onRemove(p.id)}
-                    className="text-white/20 hover:text-red-400 transition-colors text-base leading-none flex-shrink-0 opacity-0 group-hover:opacity-100"
-                  >
-                    ×
-                  </button>
-                </motion.div>
-              ))}
-            </div>
+                  {participants.map((p, idx) => (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className={`flex items-center gap-2 bg-black/25 border border-white/8 group ${
+                        cols > 1 ? "px-3 py-2 rounded-xl" : "px-4 py-2.5 rounded-xl"
+                      }`}
+                    >
+                      <span
+                        className={`text-primary-400 font-bold flex-shrink-0 tabular-nums text-center ${
+                          cols > 1 ? "text-xs w-4" : "text-xs w-5"
+                        }`}
+                      >
+                        {idx + 1}
+                      </span>
+                      <span className="flex-1 text-white font-medium text-sm truncate">
+                        {p.name}
+                      </span>
+                      <button
+                        onClick={() => onRemove(p.id)}
+                        className="text-white/20 hover:text-red-400 transition-colors text-base leading-none flex-shrink-0 opacity-0 group-hover:opacity-100"
+                      >
+                        ×
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              );
+            })()}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Library picker modal */}
+      <LibraryPickerModal
+        isOpen={showLibraryPicker}
+        onClose={() => setShowLibraryPicker(false)}
+        savedItems={savedItems}
+        recentFolder={tournamentRecentFolder}
+        otherFolders={otherFolders}
+        selectedItems={participants.map((p) => p.name)}
+        loadingItems={loadingItems}
+        onToggleItem={onToggle}
+        onDeleteItem={onDeleteSavedItem}
+        onCreateFolder={onCreateFolder}
+        onDeleteFolder={onDeleteFolder}
+        onToggleItemFolder={onToggleItemFolder}
+      />
     </div>
   );
 }

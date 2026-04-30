@@ -1,268 +1,462 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface ClassementDrawStepProps {
   items: Array<{ id: string; name: string }>;
   onClose: () => void;
   onBack: () => void;
-  onComplete?: (winnerName: string) => void;
+  onComplete?: (winnerName: string, rankedNames: string[]) => void;
 }
 
-// First drawn = rank 1 (champion), last drawn = rank N
+type Phase = "idle" | "spinning" | "done";
+
+// ── SlotReel ──────────────────────────────────────────────────────────────────
+// Remounts on each draw (key={spinKey} from parent) → fresh animation every time
+const ITEM_H = 52;
+
+function SlotReel({
+  chosen,
+  pool,
+  onDone,
+}: {
+  chosen: string;
+  pool: string[];
+  onDone: () => void;
+}) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const reel = useMemo(() => {
+    const arr: string[] = [];
+    const passes = Math.min(4, Math.max(2, Math.ceil(10 / Math.max(pool.length, 1))));
+    for (let p = 0; p < passes; p++) {
+      arr.push(...[...pool].sort(() => Math.random() - 0.5));
+    }
+    arr.push(chosen);
+    return arr;
+  }, []); // empty deps — intentional, component remounts each spin
+
+  const totalY = -(reel.length - 1) * ITEM_H;
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl w-full"
+      style={{
+        height: ITEM_H,
+        background: "rgba(188,184,143,0.07)",
+        border: "1px solid rgba(188,184,143,0.25)",
+        boxShadow: "0 0 20px rgba(188,184,143,0.08)",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-5 z-10"
+        style={{ background: "linear-gradient(to bottom, rgba(12,12,42,0.95), transparent)" }}
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-5 z-10"
+        style={{ background: "linear-gradient(to top, rgba(12,12,42,0.95), transparent)" }}
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 z-10"
+        style={{
+          top: "50%",
+          transform: "translateY(-50%)",
+          height: ITEM_H,
+          background: "rgba(188,184,143,0.04)",
+          borderTop: "1px solid rgba(188,184,143,0.18)",
+          borderBottom: "1px solid rgba(188,184,143,0.18)",
+        }}
+      />
+
+      <motion.div
+        initial={{ y: 0 }}
+        animate={{ y: totalY }}
+        transition={{
+          duration: 1.8,
+          ease: [0.05, 0.55, 0.2, 1.0],
+        }}
+        onAnimationComplete={onDone}
+      >
+        {reel.map((name, i) => (
+          <div
+            key={i}
+            className="flex items-center justify-center font-bold text-white text-base px-4"
+            style={{ height: ITEM_H }}
+          >
+            {name}
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Medal colour helper ───────────────────────────────────────────────────────
+function medalColor(rank: number): string {
+  if (rank === 1) return "#ffd700";
+  if (rank === 2) return "#a8b4c2";
+  if (rank === 3) return "#cd7f32";
+  return "rgba(255,255,255,0.3)";
+}
+
+function rankLabel(rank: number): string {
+  if (rank === 1) return "Champion";
+  if (rank === 2) return "2e place";
+  if (rank === 3) return "3e place";
+  return `${rank}e place`;
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function ClassementDrawStep({
   items,
   onClose,
   onBack,
   onComplete,
 }: ClassementDrawStepProps) {
-  const initialNamesRef = useRef<string[]>(items.map((i) => i.name));
-  const initialNames = initialNamesRef.current;
-  const totalCount = initialNames.length;
+  const totalCount = items.length;
+  const allNames = useMemo(() => items.map((i) => i.name), [items]);
 
-  const [remaining, setRemaining] = useState<string[]>(initialNames);
-  // ranking[i] = person at rank i+1 (ranking[0] = 1st = champion)
+  const [remaining, setRemaining] = useState<string[]>(allNames);
+  // ranking[i] = person at rank i+1
+  // ranking[0] = champion (rank 1), ranking[N-1] = last place (rank N)
   const [ranking, setRanking] = useState<string[]>([]);
-  const [isComplete, setIsComplete] = useState(false);
-  const [lastPicked, setLastPicked] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [spinKey, setSpinKey] = useState(0);
+  const [currentChosen, setCurrentChosen] = useState<string>("");
   const [autoMode, setAutoMode] = useState(false);
 
-  const hasStarted = ranking.length > 0;
-  const currentRank = ranking.length + 1;
-
+  const currentChosenRef = useRef<string>("");
+  const rankingCountRef = useRef(0);
   const completedRef = useRef(false);
+  const revealedAllRef = useRef(false);
 
+  const isComplete = phase === "done";
+
+  // ── Ranked slots for display ──────────────────────────────────────────────
+  // rank r → ranking[r-1]
+  const rankedSlots = useMemo(
+    () =>
+      Array.from({ length: totalCount }, (_, i) => ({
+        rank: i + 1,
+        name: ranking[i] ?? null,
+      })),
+    [ranking, totalCount]
+  );
+
+  // Column layout (column-major)
+  const cols = totalCount <= 5 ? 1 : totalCount <= 10 ? 2 : 3;
+  const perCol = Math.ceil(totalCount / cols);
+  const columns = useMemo(
+    () => Array.from({ length: cols }, (_, c) => rankedSlots.slice(c * perCol, (c + 1) * perCol)),
+    [rankedSlots, cols, perCol]
+  );
+
+  // ── Draw handler ──────────────────────────────────────────────────────────
   const handleDraw = useCallback(() => {
-    if (remaining.length === 0) return;
+    if (remaining.length === 0 || phase !== "idle") return;
     const idx = Math.floor(Math.random() * remaining.length);
-    const drawn = remaining[idx];
-    const newRemaining = remaining.filter((_, i) => i !== idx);
-    setRemaining(newRemaining);
-    setRanking((r) => [...r, drawn]);
-    setLastPicked(drawn);
-    if (newRemaining.length === 0) {
-      setIsComplete(true);
-      setAutoMode(false);
-    }
-  }, [remaining]);
+    const chosen = remaining[idx];
+    currentChosenRef.current = chosen;
+    setCurrentChosen(chosen);
+    setSpinKey((prev) => prev + 1);
+    setPhase("spinning");
+  }, [remaining, phase]);
 
-  // Fire onComplete once when the draw finishes
-  // ranking[0] = first drawn = champion (rank 1)
+  // Called by SlotReel when its animation completes
+  const handleSpinDone = useCallback(() => {
+    if (revealedAllRef.current) return; // "Tout révéler" already took over
+    const chosen = currentChosenRef.current;
+    rankingCountRef.current += 1;
+    const isLast = rankingCountRef.current >= totalCount;
+    setRemaining((prev) => prev.filter((n) => n !== chosen));
+    setRanking((prev) => [...prev, chosen]);
+    setPhase(isLast ? "done" : "idle");
+  }, [totalCount]);
+
+  // ── Reveal all ────────────────────────────────────────────────────────────
+  const handleRevealAll = useCallback(() => {
+    if (phase === "done") return;
+    revealedAllRef.current = true;
+    setAutoMode(false);
+    const snap = remaining.length > 0 ? remaining : [];
+    const shuffled = [...snap].sort(() => Math.random() - 0.5);
+    setRanking((prev) => {
+      const newRanking = [...prev, ...shuffled];
+      rankingCountRef.current = newRanking.length;
+      return newRanking;
+    });
+    setRemaining([]);
+    setPhase("done");
+  }, [phase, remaining]);
+
+  // ── Fire onComplete ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (isComplete && ranking.length > 0 && !completedRef.current) {
+    if (isComplete && ranking.length === totalCount && !completedRef.current) {
       completedRef.current = true;
-      onComplete?.(ranking[0]);
+      // ranking[0] = champion, already in ascending rank order
+      onComplete?.(ranking[0], [...ranking]);
     }
-  }, [isComplete, ranking, onComplete]);
+  }, [isComplete, ranking, totalCount, onComplete]);
 
-  // Auto mode
+  // ── Auto mode ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!autoMode || isComplete || remaining.length === 0) return;
-    const timer = setTimeout(handleDraw, 650);
-    return () => clearTimeout(timer);
-  }, [autoMode, isComplete, remaining.length, handleDraw]);
+    if (!autoMode || phase !== "idle" || remaining.length === 0) return;
+    const t = setTimeout(handleDraw, 450);
+    return () => clearTimeout(t);
+  }, [autoMode, phase, remaining.length, handleDraw]);
 
+  // ── Restart ───────────────────────────────────────────────────────────────
   const handleRestart = () => {
-    setRemaining(initialNames);
+    completedRef.current = false;
+    rankingCountRef.current = 0;
+    revealedAllRef.current = false;
+    setRemaining(allNames);
     setRanking([]);
-    setIsComplete(false);
-    setLastPicked(null);
+    setPhase("idle");
+    setSpinKey(0);
     setAutoMode(false);
   };
 
-  const medalColor = (rank: number) => {
-    if (rank === 1) return "#ffd700";
-    if (rank === 2) return "#c0c8d8";
-    if (rank === 3) return "#cd7f32";
-    return "rgba(255,255,255,0.25)";
-  };
+  const hasStarted = ranking.length > 0 || phase === "spinning";
+  const nextRank = ranking.length + 1;
 
   return (
-    <div className="px-6 pt-6 pb-4 flex flex-col gap-4">
-      {/* Status */}
-      <div className="flex items-center justify-between">
-        {!isComplete ? (
-          <p className="text-white/50 text-sm">
-            Prochain tiré :{" "}
-            <span className="font-bold" style={{ color: medalColor(currentRank) }}>
-              {currentRank === 1
-                ? "🥇 Champion"
-                : currentRank === 2
-                ? "🥈 2e place"
-                : currentRank === 3
-                ? "🥉 3e place"
-                : `${currentRank}e place`}
-            </span>
-          </p>
-        ) : (
-          <p className="text-yellow-300 font-bold text-base">🥇 Classement final</p>
-        )}
-        {lastPicked && !isComplete && (
-          <p className="text-white/30 text-xs truncate max-w-[140px]">
-            {ranking.length === 1 ? "🥇" : ranking.length === 2 ? "🥈" : ranking.length === 3 ? "🥉" : `${ranking.length}e`}{" "}
-            <span className="text-white/55">{lastPicked}</span>
-          </p>
-        )}
-      </div>
+    <div className="px-5 pt-5 pb-4 flex flex-col gap-4 overflow-y-auto">
 
-      {/* Remaining participants */}
-      {!isComplete && remaining.length > 0 && (
-        <div>
-          <p className="text-white/25 text-xs uppercase tracking-wide mb-2">
-            Restants · {remaining.length}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            <AnimatePresence>
-              {remaining.map((name) => (
-                <motion.span
-                  key={name}
-                  layout
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.75, x: 16 }}
-                  transition={{ duration: 0.18 }}
-                  className="text-sm text-white/70 px-3 py-1.5 rounded-full"
-                  style={{
-                    background: "rgba(255,255,255,0.07)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  {name}
-                </motion.span>
-              ))}
-            </AnimatePresence>
+      {/* ── Slot machine + remaining (side-by-side on sm) ── */}
+      <div className="flex flex-col sm:flex-row gap-4">
+
+        {/* Left: slot + status */}
+        <div className="flex flex-col gap-3 sm:w-64 flex-shrink-0">
+
+          {/* Status */}
+          <div className="flex items-center justify-between">
+            <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">
+              {isComplete
+                ? "Classement final"
+                : `${remaining.length} restant${remaining.length !== 1 ? "s" : ""}`}
+            </p>
+            {!isComplete && (
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide"
+                style={{
+                  background: nextRank === 1 ? "rgba(255,215,0,0.12)" : "rgba(188,184,143,0.1)",
+                  color: nextRank === 1 ? "#ffd700" : "rgba(188,184,143,0.8)",
+                  border: nextRank === 1 ? "1px solid rgba(255,215,0,0.2)" : "1px solid rgba(188,184,143,0.2)",
+                }}
+              >
+                {rankLabel(nextRank)}
+              </span>
+            )}
           </div>
-        </div>
-      )}
 
-      {/* Ranking list */}
-      {ranking.length > 0 && (
-        <div>
-          <p className="text-white/25 text-xs uppercase tracking-wide mb-2">
-            {isComplete ? "Classement" : "Classement en cours"}
-          </p>
-          <div className="space-y-1.5 max-h-52 overflow-y-auto pr-0.5">
-            <AnimatePresence initial={false}>
-              {ranking.map((name, i) => {
-                const rank = i + 1;
-                const isChampion = rank === 1;
-                const isLast = isComplete && rank === totalCount;
-                return (
-                  <motion.div
+          {/* Slot reel */}
+          {!isComplete && (
+            phase === "spinning" ? (
+              <SlotReel
+                key={spinKey}
+                chosen={currentChosen}
+                pool={remaining}
+                onDone={handleSpinDone}
+              />
+            ) : (
+              <div
+                className="flex items-center justify-center rounded-2xl text-white/20 text-sm italic w-full"
+                style={{
+                  height: ITEM_H,
+                  background: "rgba(255,255,255,0.02)",
+                  border: "1px dashed rgba(255,255,255,0.08)",
+                }}
+              >
+                {remaining.length === totalCount ? "Prêt à classer" : "Prochain tirage…"}
+              </div>
+            )
+          )}
+
+          {/* Remaining pills */}
+          {!isComplete && (
+            <div className="flex flex-wrap gap-1.5">
+              <AnimatePresence initial={false}>
+                {remaining.map((name) => (
+                  <motion.span
                     key={name}
                     layout
-                    initial={{ opacity: 0, x: 16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.7, x: 8 }}
+                    transition={{ duration: 0.16 }}
+                    className="text-xs font-medium px-2.5 py-1 rounded-full"
                     style={{
-                      background: isChampion
-                        ? "rgba(255,215,0,0.08)"
-                        : "rgba(255,255,255,0.04)",
-                      border: isChampion
-                        ? "1px solid rgba(255,215,0,0.25)"
-                        : "1px solid rgba(255,255,255,0.07)",
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "rgba(255,255,255,0.6)",
+                    }}
+                  >
+                    {name}
+                  </motion.span>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {isComplete && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-3"
+            >
+              <p className="text-yellow-300 font-black text-base">Classement terminé !</p>
+              <p className="text-white/35 text-xs mt-1">Champion : {ranking[0]}</p>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Right: ranking grid */}
+        <div className="flex-1 min-w-0">
+          <p className="text-white/25 text-[10px] uppercase tracking-widest mb-2 font-semibold">
+            Classement
+          </p>
+          <div
+            className="grid gap-x-2 gap-y-0.5"
+            style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+          >
+            {columns.map((col, ci) => (
+              <div key={ci} className="flex flex-col gap-0.5">
+                {col.map(({ rank, name }) => (
+                  <div
+                    key={rank}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors"
+                    style={{
+                      background: name && rank === 1
+                        ? "rgba(255,215,0,0.06)"
+                        : name
+                        ? "rgba(255,255,255,0.03)"
+                        : "transparent",
+                      border: name && rank === 1
+                        ? "1px solid rgba(255,215,0,0.18)"
+                        : name
+                        ? "1px solid rgba(255,255,255,0.06)"
+                        : "1px solid rgba(255,255,255,0.03)",
+                      minHeight: 32,
                     }}
                   >
                     <span
-                      className="font-bold text-sm w-6 text-center flex-shrink-0"
-                      style={{ color: medalColor(rank) }}
+                      className="text-[11px] font-black w-5 text-right flex-shrink-0 tabular-nums"
+                      style={{ color: name ? medalColor(rank) : "rgba(255,255,255,0.1)" }}
                     >
                       {rank}
                     </span>
-                    <span
-                      className={`flex-1 text-sm font-medium truncate ${
-                        isChampion
-                          ? "text-yellow-300"
-                          : isLast
-                          ? "text-white/40"
-                          : "text-white/75"
-                      }`}
-                    >
-                      {name}
-                    </span>
-                    {isChampion && <span className="text-base flex-shrink-0">🥇</span>}
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                    <AnimatePresence mode="wait" initial={false}>
+                      {name ? (
+                        <motion.span
+                          key={name}
+                          initial={{ opacity: 0, x: -14, scale: 0.82 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          transition={{ type: "spring", stiffness: 420, damping: 30 }}
+                          className="text-xs font-semibold truncate flex-1"
+                          style={{
+                            color: rank === 1
+                              ? "rgba(255,215,0,0.95)"
+                              : rank <= 3
+                              ? "rgba(255,255,255,0.88)"
+                              : "rgba(255,255,255,0.55)",
+                          }}
+                        >
+                          {name}
+                        </motion.span>
+                      ) : (
+                        <motion.span
+                          key="empty"
+                          className="text-[10px] flex-1"
+                          style={{ color: "rgba(255,255,255,0.1)" }}
+                        >
+                          —
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Actions */}
-      {!isComplete ? (
-        <div className="flex gap-3">
-          {!hasStarted && (
+      {/* ── Actions ── */}
+      <div className="flex gap-2.5 pt-1">
+        {!isComplete ? (
+          <>
+            {!hasStarted && (
+              <button
+                onClick={onBack}
+                className="px-4 py-2.5 rounded-2xl text-white/50 hover:text-white hover:bg-white/6 transition-all font-medium text-sm flex-shrink-0"
+                style={{ border: "1px solid rgba(255,255,255,0.12)" }}
+              >
+                Retour
+              </button>
+            )}
             <button
-              onClick={onBack}
-              className="px-3 py-2 rounded-2xl text-white/50 hover:text-white hover:bg-white/6 transition-all font-medium text-sm"
+              onClick={handleDraw}
+              disabled={phase === "spinning" || autoMode}
+              className="flex-1 py-3 rounded-2xl font-extrabold text-white text-sm bg-gradient-to-r from-secondary-600 to-secondary-500 hover:from-secondary-500 hover:to-secondary-400 disabled:opacity-40 transition-all active:scale-[0.98]"
+            >
+              {remaining.length === totalCount
+                ? "Désigner le champion"
+                : remaining.length === 1
+                ? `Désigner le dernier (${totalCount}e)`
+                : `Désigner la ${nextRank}e place`}
+            </button>
+            {hasStarted && (
+              <motion.button
+                onClick={() => setAutoMode((v) => !v)}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2.5 rounded-2xl font-bold text-sm transition-all flex-shrink-0 disabled:opacity-50"
+                style={
+                  autoMode
+                    ? {
+                        background: "rgba(239,68,68,0.15)",
+                        border: "1px solid rgba(239,68,68,0.35)",
+                        color: "rgba(252,165,165,0.9)",
+                      }
+                    : {
+                        background: "rgba(20,184,166,0.1)",
+                        border: "1px solid rgba(20,184,166,0.28)",
+                        color: "rgba(45,212,191,0.9)",
+                      }
+                }
+              >
+                {autoMode ? "Stop" : "Auto"}
+              </motion.button>
+            )}
+            <button
+              onClick={handleRevealAll}
+              className="px-3 py-2.5 rounded-2xl font-bold text-xs flex-shrink-0 transition-all"
+              style={{
+                background: "rgba(251,146,60,0.1)",
+                border: "1px solid rgba(251,146,60,0.28)",
+                color: "rgba(251,146,60,0.9)",
+              }}
+            >
+              Tout révéler
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleRestart}
+              className="flex-1 py-3 rounded-2xl text-white/65 hover:text-white hover:bg-white/6 transition-all font-semibold text-sm"
               style={{ border: "1px solid rgba(255,255,255,0.12)" }}
             >
-              Retour
+              Recommencer
             </button>
-          )}
-          <button
-            onClick={handleDraw}
-            disabled={autoMode}
-            className="flex-1 py-3.5 rounded-2xl font-extrabold text-white text-base bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 disabled:opacity-40 shadow-glow-md transition-all active:scale-[0.98]"
-          >
-            {remaining.length === totalCount
-              ? "Désigner le champion"
-              : remaining.length === 1
-              ? `Désigner le dernier (${totalCount}e)`
-              : `Désigner la ${currentRank}e place`}
-          </button>
-          {hasStarted && !isComplete && (
-            <motion.button
-              onClick={() => setAutoMode((v) => !v)}
-              whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 rounded-2xl font-bold text-sm transition-all flex-shrink-0"
-              style={
-                autoMode
-                  ? {
-                      background: "rgba(239,68,68,0.15)",
-                      border: "1px solid rgba(239,68,68,0.35)",
-                      color: "rgba(252,165,165,0.9)",
-                    }
-                  : {
-                      background: "rgba(97,97,216,0.12)",
-                      border: "1px solid rgba(97,97,216,0.25)",
-                      color: "rgba(161,149,248,0.9)",
-                    }
-              }
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-2xl bg-primary-500 hover:bg-primary-400 text-white font-bold transition-all text-sm"
             >
-              {autoMode ? (
-                <span className="flex items-center gap-1.5">
-                  <motion.span
-                    animate={{ opacity: [1, 0.3, 1] }}
-                    transition={{ repeat: Infinity, duration: 0.8 }}
-                    className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block"
-                  />
-                  Stop
-                </span>
-              ) : (
-                "Auto"
-              )}
-            </motion.button>
-          )}
-        </div>
-      ) : (
-        <div className="flex gap-3">
-          <button
-            onClick={handleRestart}
-            className="flex-1 py-3 rounded-2xl text-white/65 hover:text-white hover:bg-white/6 transition-all font-semibold text-sm"
-            style={{ border: "1px solid rgba(255,255,255,0.12)" }}
-          >
-            Recommencer
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-2xl bg-primary-500 hover:bg-primary-400 text-white font-bold transition-all text-sm"
-          >
-            Fermer
-          </button>
-        </div>
-      )}
+              Fermer
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

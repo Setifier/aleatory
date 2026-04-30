@@ -499,54 +499,29 @@ function ParticipantGroupModal({ group, onClose, onRelaunch }: {
   onClose: () => void;
   onRelaunch: (items: LotteryItem[], title?: string) => void;
 }) {
+  const n    = group?.board.length ?? 0;
+  const cols = n > 8 ? 2 : 1;
+  const maxWidthClass = n > 8 ? "sm:max-w-md" : "sm:max-w-sm";
+
   return (
     <AnimatePresence>
       {group && (
-        <motion.div
-          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4"
-          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", paddingTop: "80px" }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <motion.div
-            className="relative w-full sm:max-w-sm flex flex-col rounded-t-3xl sm:rounded-3xl overflow-hidden"
-            style={{
-              maxHeight: "calc(100vh - 96px)",
-              background: "rgba(10,10,38,0.98)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
-            }}
-            initial={{ opacity: 0, y: "100%" }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: "100%" }}
-            transition={{ type: "spring", stiffness: 360, damping: 38 }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <div>
-                <h2 className="text-sm font-black text-white uppercase tracking-wide">
-                  Groupe de participants
-                </h2>
-                <p className="text-white/40 text-xs mt-0.5">
-                  {group.participants.length} participants · {group.drawCount} tirage{group.drawCount > 1 ? "s" : ""}
-                </p>
-              </div>
-              <button onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/6 hover:bg-white/12 text-white/50 hover:text-white transition-all text-sm">
-                ✕
-              </button>
-            </div>
+        <SlideModalShell onClickBackdrop={onClose} maxWidthClass={maxWidthClass}>
+          <ModalHeader
+            title="Groupe de participants"
+            subtitle={`${group.participants.length} participants · ${group.drawCount} tirage${group.drawCount > 1 ? "s" : ""}`}
+            onClose={onClose}
+          />
 
-            {/* Leaderboard */}
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="text-white/30 text-xs uppercase tracking-wider mb-3">Classement</p>
+          {/* Leaderboard */}
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <p className="text-white/30 text-xs uppercase tracking-wider mb-3">Classement</p>
+
+            {cols === 1 ? (
+              /* ── Single column : full format with animated progress bar ── */
               <div className="space-y-3">
                 {group.board.map((row, ri) => {
-                  const pct = group.drawCount > 0 ? (row.wins / group.drawCount) * 100 : 0;
+                  const pct     = group.drawCount > 0 ? (row.wins / group.drawCount) * 100 : 0;
                   const isFirst = ri === 0 && row.wins > 0;
                   return (
                     <div key={row.name} className="flex items-center gap-3">
@@ -554,10 +529,7 @@ function ParticipantGroupModal({ group, onClose, onRelaunch }: {
                         style={{ color: isFirst ? "#ffd700" : "rgba(255,255,255,0.25)" }}>
                         {ri + 1}
                       </span>
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black flex-shrink-0"
-                        style={{ background: colorFor(row.name).bg, color: colorFor(row.name).color }}>
-                        {row.name.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar name={row.name} className="w-8 h-8 rounded-xl text-xs" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium truncate"
@@ -576,11 +548,7 @@ function ParticipantGroupModal({ group, onClose, onRelaunch }: {
                             initial={{ width: 0 }}
                             animate={{ width: `${pct}%` }}
                             transition={{ duration: 0.5, delay: ri * 0.05 }}
-                            style={{
-                              background: isFirst
-                                ? "linear-gradient(90deg, #e8b84b, #ffd700)"
-                                : "rgba(97,97,216,0.7)",
-                            }}
+                            style={{ background: isFirst ? "linear-gradient(90deg,#e8b84b,#ffd700)" : "rgba(97,97,216,0.7)" }}
                           />
                         </div>
                       </div>
@@ -588,24 +556,144 @@ function ParticipantGroupModal({ group, onClose, onRelaunch }: {
                   );
                 })}
               </div>
-            </div>
-
-            {/* Footer */}
-            {group.relaunchItems.length >= 2 && (
-              <div className="px-5 py-4 flex-shrink-0"
-                style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                <button
-                  onClick={() => onRelaunch(group.relaunchItems, group.relaunchTitle)}
-                  className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-400 text-white font-bold text-sm transition-all"
-                >
-                  Relancer avec ce groupe
-                </button>
-              </div>
+            ) : (
+              /* ── Multi-column : compact rows, score badge ── */
+              (() => {
+                const perCol  = Math.ceil(n / cols);
+                const columns = Array.from({ length: cols }, (_, c) =>
+                  group.board.slice(c * perCol, (c + 1) * perCol).map((row, i) => ({
+                    row, rank: c * perCol + i + 1,
+                  }))
+                );
+                return (
+                  <div className="grid gap-x-3" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+                    {columns.map((col, ci) => (
+                      <div key={ci} className="flex flex-col gap-1">
+                        {col.map(({ row, rank }) => {
+                          const isFirst = rank === 1 && row.wins > 0;
+                          return (
+                            <div key={row.name}
+                              className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
+                              style={{ background: isFirst ? "rgba(255,215,0,0.05)" : "transparent" }}
+                            >
+                              <span className="w-4 text-right text-[10px] font-black flex-shrink-0 tabular-nums"
+                                style={{ color: isFirst ? "#ffd700" : "rgba(255,255,255,0.25)" }}>
+                                {rank}
+                              </span>
+                              <Avatar name={row.name} className="w-6 h-6 rounded-lg text-[10px]" />
+                              <span className="flex-1 text-xs font-medium truncate"
+                                style={{ color: isFirst ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)" }}>
+                                {row.name}
+                              </span>
+                              <span className="text-[10px] font-bold flex-shrink-0 px-1.5 py-0.5 rounded-full"
+                                style={{
+                                  background: isFirst ? "rgba(255,215,0,0.12)" : "rgba(255,255,255,0.05)",
+                                  color: isFirst ? "#ffd700" : "rgba(255,255,255,0.3)",
+                                }}>
+                                {row.wins}/{group.drawCount}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()
             )}
-          </motion.div>
-        </motion.div>
+          </div>
+
+          {/* Footer */}
+          {group.relaunchItems.length >= 2 && (
+            <div className="px-5 py-4 flex-shrink-0"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              <button
+                onClick={() => onRelaunch(group.relaunchItems, group.relaunchTitle)}
+                className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-400 text-white font-bold text-sm transition-all"
+              >
+                Relancer avec ce groupe
+              </button>
+            </div>
+          )}
+        </SlideModalShell>
       )}
     </AnimatePresence>
+  );
+}
+
+// ── Shared UI primitives ──────────────────────────────────────────────────────
+
+/** Lettre initiale colorée, réutilisable partout */
+function Avatar({ name, className }: { name: string; className: string }) {
+  const c = colorFor(name);
+  return (
+    <div
+      className={`flex items-center justify-center font-black flex-shrink-0 ${className}`}
+      style={{ background: c.bg, color: c.color }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+/** Shell commun aux modales slide-up (bottom → center) */
+function SlideModalShell({ children, onClickBackdrop, maxWidthClass }: {
+  children: React.ReactNode;
+  onClickBackdrop: () => void;
+  maxWidthClass: string;
+}) {
+  return (
+    <motion.div
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4"
+      style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", paddingTop: "80px" }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClickBackdrop}
+    >
+      <motion.div
+        className={`relative w-full ${maxWidthClass} flex flex-col rounded-t-3xl sm:rounded-3xl overflow-hidden`}
+        style={{
+          maxHeight: "calc(100vh - 140px)",
+          background: "rgba(10,10,38,0.98)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
+        }}
+        initial={{ opacity: 0, y: "100%" }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: "100%" }}
+        transition={{ type: "spring", stiffness: 360, damping: 38 }}
+        onClick={e => e.stopPropagation()}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/** En-tête de modale standardisé */
+function ModalHeader({ title, subtitle, onClose, large = false }: {
+  title: string;
+  subtitle?: string;
+  onClose: () => void;
+  large?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between ${large ? "px-6" : "px-5"} py-4 flex-shrink-0`}
+      style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+    >
+      <div className="min-w-0">
+        <h2 className={`font-black text-white uppercase tracking-wide truncate ${large ? "text-lg" : "text-sm"}`}>
+          {title}
+        </h2>
+        {subtitle && <p className="text-white/40 text-xs mt-0.5">{subtitle}</p>}
+      </div>
+      <button
+        onClick={onClose}
+        className={`flex-shrink-0 ml-4 flex items-center justify-center rounded-full bg-white/6 hover:bg-white/12 text-white/50 hover:text-white transition-all ${large ? "w-9 h-9" : "w-8 h-8 text-sm"}`}
+      >
+        ✕
+      </button>
+    </div>
   );
 }
 
@@ -638,121 +726,108 @@ function LotteryDetailModal({ entry, onClose, onRelaunch, onDelete }: {
   onRelaunch: (entry: LotteryHistoryEntry) => void;
   onDelete: (id: string) => void;
 }) {
+  const n = entry?.elements.length ?? 0;
+  const maxWidthClass = n > 16 ? "sm:max-w-lg" : n > 8 ? "sm:max-w-md" : "sm:max-w-sm";
+
   return (
     <AnimatePresence>
       {entry && (
-        <motion.div
-          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4"
-          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", paddingTop: "80px" }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <motion.div
-            className="relative w-full sm:max-w-sm flex flex-col rounded-t-3xl sm:rounded-3xl overflow-hidden"
-            style={{
-              maxHeight: "calc(100vh - 96px)",
-              background: "rgba(10,10,38,0.98)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
-            }}
-            initial={{ opacity: 0, y: "100%" }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: "100%" }}
-            transition={{ type: "spring", stiffness: 360, damping: 38 }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <SlideModalShell onClickBackdrop={onClose} maxWidthClass={maxWidthClass}>
+          <ModalHeader
+            title="Détails du tirage"
+            subtitle={entry.timestamp.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            onClose={onClose}
+          />
+
+          {/* Winner */}
+          <div className="px-5 pt-4 pb-3 flex-shrink-0"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            {entry.title && (
+              <p className="text-white/30 text-xs uppercase tracking-wider mb-2">{entry.title}</p>
+            )}
+            {entry.drawMode && (
+              <div className="mb-3"><DrawModeBadge mode={entry.drawMode} /></div>
+            )}
+            <div className="flex items-center gap-3">
+              <Avatar name={entry.winner.name} className="w-12 h-12 rounded-2xl text-lg" />
               <div>
-                <h2 className="text-sm font-black text-white uppercase tracking-wide">Détails du tirage</h2>
-                <p className="text-white/40 text-xs mt-0.5">
-                  {entry.timestamp.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                </p>
+                <p className="text-xs text-white/35 uppercase tracking-wider mb-0.5">Gagnant</p>
+                <p className="text-xl font-black text-white">{entry.winner.name}</p>
               </div>
-              <button onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/6 hover:bg-white/12 text-white/50 hover:text-white transition-all text-sm">
-                ✕
-              </button>
+              <span className="ml-auto text-2xl">🏆</span>
             </div>
+          </div>
 
-            {/* Winner */}
-            <div className="px-5 pt-4 pb-3 flex-shrink-0"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              {entry.title && (
-                <p className="text-white/30 text-xs uppercase tracking-wider mb-2">{entry.title}</p>
-              )}
-              {entry.drawMode && (
-                <div className="mb-3">
-                  <DrawModeBadge mode={entry.drawMode} />
-                </div>
-              )}
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black flex-shrink-0"
-                  style={{ background: colorFor(entry.winner.name).bg, color: colorFor(entry.winner.name).color }}>
-                  {entry.winner.name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="text-xs text-white/35 uppercase tracking-wider mb-0.5">Gagnant</p>
-                  <p className="text-xl font-black text-white">{entry.winner.name}</p>
-                </div>
-                <span className="ml-auto text-2xl">🏆</span>
-              </div>
-            </div>
-
-            {/* Participants */}
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="text-white/30 text-xs uppercase tracking-wider mb-3">
-                {entry.elements.length} participant{entry.elements.length > 1 ? "s" : ""}
-              </p>
-              <div className="space-y-0.5">
-                {entry.elements.map((p, pi) => {
-                  const isWinner = p.name === entry.winner.name;
-                  const col = colorFor(p.name);
-                  return (
-                    <div key={pi}
-                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl"
-                      style={{ background: isWinner ? "rgba(255,215,0,0.05)" : "transparent" }}
-                    >
-                      <span className="w-4 text-right text-xs flex-shrink-0 tabular-nums"
-                        style={{ color: isWinner ? "#ffd700" : "rgba(255,255,255,0.2)" }}>
-                        {pi + 1}
-                      </span>
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0"
-                        style={{ background: col.bg, color: col.color }}>
-                        {p.name.charAt(0).toUpperCase()}
+          {/* Participants */}
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            {(() => {
+              const isRanked  = entry.drawMode === "elimination" || entry.drawMode === "classement";
+              const medalColor = (rank: number) => {
+                if (rank === 1) return "#ffd700";
+                if (rank === 2) return "#a8b4c2";
+                if (rank === 3) return "#cd7f32";
+                return "rgba(255,255,255,0.2)";
+              };
+              const cols    = n <= 8 ? 1 : n <= 16 ? 2 : 3;
+              const perCol  = Math.ceil(n / cols);
+              const columns = Array.from({ length: cols }, (_, c) =>
+                entry.elements.slice(c * perCol, (c + 1) * perCol).map((p, i) => ({
+                  p, rank: c * perCol + i + 1,
+                }))
+              );
+              return (
+                <>
+                  <p className="text-white/30 text-xs uppercase tracking-wider mb-3">
+                    {isRanked ? "Classement final" : `${n} participant${n > 1 ? "s" : ""}`}
+                  </p>
+                  <div className="grid gap-x-3 gap-y-0.5"
+                    style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+                    {columns.map((col, ci) => (
+                      <div key={ci} className="flex flex-col gap-0.5">
+                        {col.map(({ p, rank }) => {
+                          const isWinner = isRanked ? rank === 1 : p.name === entry.winner.name;
+                          return (
+                            <div key={rank}
+                              className="flex items-center gap-2 px-2 py-1 rounded-lg"
+                              style={{ background: isWinner ? "rgba(255,215,0,0.05)" : "transparent" }}
+                            >
+                              <span className="w-4 text-right text-xs flex-shrink-0 tabular-nums font-bold"
+                                style={{ color: isRanked ? medalColor(rank) : (isWinner ? "#ffd700" : "rgba(255,255,255,0.18)") }}>
+                                {rank}
+                              </span>
+                              <Avatar name={p.name} className="w-5 h-5 rounded-md text-[10px]" />
+                              <span className="text-xs font-medium flex-1 truncate"
+                                style={{ color: isWinner ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.6)" }}>
+                                {p.name}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <span className="text-sm font-medium flex-1 truncate"
-                        style={{ color: isWinner ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.6)" }}>
-                        {p.name}
-                      </span>
-                      {isWinner && <span className="text-sm flex-shrink-0">🏆</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
 
-            {/* Footer */}
-            <div className="px-5 py-4 flex gap-2 flex-shrink-0"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-              {entry.elements?.length >= 2 && (
-                <button onClick={() => onRelaunch(entry)}
-                  className="flex-1 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-400 text-white font-bold text-sm transition-all">
-                  Relancer
-                </button>
-              )}
-              {entry.id && (
-                <button onClick={() => onDelete(entry.id!)}
-                  className="py-2.5 px-4 rounded-xl border border-white/10 text-white/35 hover:text-red-400 hover:border-red-500/25 font-medium text-sm transition-all">
-                  Supprimer
-                </button>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
+          {/* Footer */}
+          <div className="px-5 py-4 flex gap-2 flex-shrink-0"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            {entry.elements?.length >= 2 && (
+              <button onClick={() => onRelaunch(entry)}
+                className="flex-1 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-400 text-white font-bold text-sm transition-all">
+                Relancer
+              </button>
+            )}
+            {entry.id && (
+              <button onClick={() => onDelete(entry.id!)}
+                className="py-2.5 px-4 rounded-xl border border-white/10 text-white/35 hover:text-red-400 hover:border-red-500/25 font-medium text-sm transition-all">
+                Supprimer
+              </button>
+            )}
+          </div>
+        </SlideModalShell>
       )}
     </AnimatePresence>
   );
@@ -778,9 +853,9 @@ function TournamentDetailModal({ tournament, matches, loading, onClose, onDelete
           onClick={onClose}
         >
           <motion.div
-            className="relative w-full max-w-[640px] flex flex-col rounded-3xl overflow-hidden"
+            className="relative w-full max-w-[860px] flex flex-col rounded-3xl overflow-hidden"
             style={{
-              maxHeight: "calc(100vh - 112px)",
+              maxHeight: "calc(100vh - 80px)",
               background: "rgba(10,10,38,0.98)",
               border: "1px solid rgba(255,255,255,0.1)",
               boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
@@ -792,27 +867,18 @@ function TournamentDetailModal({ tournament, matches, loading, onClose, onDelete
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <div className="min-w-0">
-                <h2 className="text-lg font-black text-white uppercase tracking-wide truncate">
-                  {tournament.title}
-                </h2>
-                <p className="text-white/40 text-xs mt-0.5">
-                  {tournament.participant_count} participants
-                  {" · "}
-                  {tournament.format === "group" ? "Groupes" : "Élimination directe"}
-                  {tournament.format !== "group" && tournament.participants_per_match && tournament.participants_per_match > 2
-                    ? ` · ${tournament.participants_per_match}v1` : ""}
-                  {" · "}
-                  {new Date(tournament.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
-                </p>
-              </div>
-              <button onClick={onClose}
-                className="w-9 h-9 flex-shrink-0 ml-4 flex items-center justify-center rounded-full bg-white/6 hover:bg-white/12 text-white/50 hover:text-white transition-all">
-                ✕
-              </button>
-            </div>
+            <ModalHeader
+              title={tournament.title}
+              subtitle={[
+                `${tournament.participant_count} participants`,
+                tournament.format === "group" ? "Groupes" : "Élimination directe",
+                tournament.format !== "group" && tournament.participants_per_match && tournament.participants_per_match > 2
+                  ? `${tournament.participants_per_match}v1` : "",
+                new Date(tournament.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }),
+              ].filter(Boolean).join(" · ")}
+              onClose={onClose}
+              large
+            />
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-5">
@@ -865,21 +931,21 @@ function TournamentGroupDetail({ matches }: { matches: TournamentMatch[] }) {
   }
 
   return (
-    <div className="grid gap-2.5"
-      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" }}>
+    <div className="grid gap-3"
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
       {groups.map(([name, participants]) => (
         <div key={name} className="rounded-xl overflow-hidden"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="px-3 py-2"
+          <div className="px-4 py-3"
             style={{ background: "rgba(97,97,216,0.12)", borderBottom: "1px solid rgba(97,97,216,0.18)" }}>
-            <p className="text-primary-300 text-xs font-black uppercase tracking-wide">{name}</p>
-            <p className="text-white/30 text-[10px]">{participants.length} participant{participants.length > 1 ? "s" : ""}</p>
+            <p className="text-primary-300 text-sm font-black uppercase tracking-wide">{name}</p>
+            <p className="text-white/30 text-xs">{participants.length} participant{participants.length > 1 ? "s" : ""}</p>
           </div>
-          <div className="px-3 py-2 space-y-1">
+          <div className="px-4 py-3 space-y-1.5">
             {participants.map((p, pi) => (
-              <div key={pi} className="flex items-center gap-1.5">
-                <span className="text-[10px] text-white/22 w-3 text-right tabular-nums">{pi + 1}</span>
-                <span className="text-white/75 text-xs truncate font-medium">{p}</span>
+              <div key={pi} className="flex items-center gap-2">
+                <span className="text-xs text-white/22 w-4 text-right tabular-nums flex-shrink-0">{pi + 1}</span>
+                <span className="text-white/80 text-sm truncate font-medium">{p}</span>
               </div>
             ))}
           </div>

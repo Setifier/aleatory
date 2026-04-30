@@ -8,7 +8,7 @@ import { useFolders } from "../../hooks/useFolders";
 import { normalizeText } from "../../lib/textUtils";
 import { DRAW_SPIN_DURATION } from "../../constants/timing";
 import FortuneWheel from "./FortuneWheel";
-import InlineLibrary from "../library/InlineLibrary";
+import LibraryPickerModal from "../library/LibraryPickerModal";
 import Button from "../ui/Button";
 import MechanismSelectStep, { type DrawMechanism } from "./MechanismSelectStep";
 import SlotDrawStep from "./SlotDrawStep";
@@ -42,6 +42,7 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
   const [showResult, setShowResult]       = useState(false);
   const [hasDrawn, setHasDrawn]           = useState(false);
   const [animResult, setAnimResult]       = useState<LotteryResult | null>(null);
+  const [showLibraryPicker, setShowLibraryPicker] = useState(false);
   const spinTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentResultRef = useRef<LotteryResult | null>(null);
   const titleRef         = useRef<HTMLInputElement>(null);
@@ -133,7 +134,7 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
     clearSpinTimer();
     setStep(1); setLotteryTitle(""); setInputValue("");
     setShowResult(false); setAnimResult(null);
-    setHasDrawn(false);
+    setHasDrawn(false); setShowLibraryPicker(false);
     clearItems(); clearError();
     onClose();
   };
@@ -148,6 +149,7 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
   const wheelWinner = hasDrawn && currentResult ? currentResult.winner.name : null;
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -159,7 +161,14 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
           onClick={handleClose}
         >
           <motion.div
-            className="relative w-full sm:max-w-md flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden"
+            layout
+            className={`relative w-full flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden ${
+              step === 4 && (mechanism === "elimination" || mechanism === "classement")
+                ? "sm:max-w-2xl"
+                : step === 1
+                ? "sm:max-w-xl"
+                : "sm:max-w-md"
+            }`}
             style={{
               maxHeight: "calc(100vh - 96px)",
               background: "rgba(12,12,42,0.97)",
@@ -247,21 +256,42 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
                       </AnimatePresence>
                     </div>
 
+                    {/* Library button */}
                     {isAuthenticated ? (
-                      <div className="max-h-[220px] overflow-y-auto rounded-xl">
-                        <InlineLibrary
-                          savedItems={savedItems}
-                          recentFolder={recentFolder}
-                          otherFolders={otherFolders}
-                          lotteryItems={items.map((i) => i.name)}
-                          loadingItems={loadingSavedItems}
-                          onAddItemToLottery={(name) => toggleItem(name, true)}
-                          onDeleteItem={handleDeleteSavedItem}
-                          onCreateFolder={handleCreateFolder}
-                          onDeleteFolder={handleDeleteFolder}
-                          onToggleItemFolder={handleToggleItemFolder}
-                        />
-                      </div>
+                      <button
+                        onClick={() => setShowLibraryPicker(true)}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all"
+                        style={{
+                          background: "rgba(121,101,224,0.07)",
+                          border: "1px solid rgba(121,101,224,0.2)",
+                        }}
+                      >
+                        <div
+                          className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: "rgba(121,101,224,0.18)" }}
+                        >
+                          <svg className="w-3.5 h-3.5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-semibold text-primary-300">Bibliothèque</p>
+                          {(() => {
+                            const n = items.filter(i => i.isFromSaved).length;
+                            return (
+                              <p className="text-xs text-white/35">
+                                {n > 0
+                                  ? `${n} élément${n > 1 ? "s" : ""} importé${n > 1 ? "s" : ""}`
+                                  : "Importer depuis vos dossiers"}
+                              </p>
+                            );
+                          })()}
+                        </div>
+                        <svg className="w-4 h-4 text-white/25 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
                     ) : (
                       <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-secondary-500/8 border border-secondary-500/18">
                         <span className="text-white/60 text-sm">
@@ -272,6 +302,7 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
                       </div>
                     )}
 
+                    {/* Participants list — multi-column when many */}
                     <AnimatePresence>
                       {items.length > 0 && (
                         <motion.div
@@ -286,26 +317,51 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
                               Tout vider
                             </button>
                           </div>
-                          {items.map((item, idx) => (
-                            <motion.div
-                              key={item.id}
-                              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                              className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-black/25 border border-white/8"
-                            >
-                              <span className="text-primary-400 font-bold text-sm w-5 text-center flex-shrink-0">
-                                {idx + 1}
-                              </span>
-                              <span className="flex-1 text-white font-medium text-base truncate">
-                                {item.name}
-                              </span>
-                              <button
-                                onClick={() => removeItem(item.id)}
-                                className="text-white/25 hover:text-red-400 transition-colors text-lg leading-none flex-shrink-0"
+                          {(() => {
+                            const n = items.length;
+                            const cols = n <= 8 ? 1 : n <= 16 ? 2 : 3;
+                            return (
+                              <div
+                                className="grid gap-x-2 gap-y-1.5"
+                                style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
                               >
-                                ×
-                              </button>
-                            </motion.div>
-                          ))}
+                                {items.map((item, idx) => (
+                                  <motion.div
+                                    key={item.id}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className={`flex items-center gap-2 bg-black/25 border border-white/8 ${
+                                      cols > 1 ? "px-3 py-2 rounded-xl" : "px-4 py-3 rounded-2xl"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`text-primary-400 font-bold flex-shrink-0 tabular-nums text-center ${
+                                        cols > 1 ? "text-xs w-4" : "text-sm w-5"
+                                      }`}
+                                    >
+                                      {idx + 1}
+                                    </span>
+                                    <span
+                                      className={`flex-1 font-medium text-white truncate ${
+                                        cols > 1 ? "text-sm" : "text-base"
+                                      }`}
+                                    >
+                                      {item.name}
+                                    </span>
+                                    <button
+                                      onClick={() => removeItem(item.id)}
+                                      className={`text-white/25 hover:text-red-400 transition-colors flex-shrink-0 leading-none ${
+                                        cols > 1 ? "text-base" : "text-lg"
+                                      }`}
+                                    >
+                                      ×
+                                    </button>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -453,8 +509,8 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
                         items={items}
                         onClose={handleClose}
                         onBack={() => goToStep(3)}
-                        onComplete={(winnerName) =>
-                          saveManualResult(winnerName, lotteryTitle, "elimination")
+                        onComplete={(winnerName, rankedNames) =>
+                          saveManualResult(winnerName, lotteryTitle, "elimination", rankedNames)
                         }
                       />
                     )}
@@ -464,8 +520,8 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
                         items={items}
                         onClose={handleClose}
                         onBack={() => goToStep(3)}
-                        onComplete={(winnerName) =>
-                          saveManualResult(winnerName, lotteryTitle, "classement")
+                        onComplete={(winnerName, rankedNames) =>
+                          saveManualResult(winnerName, lotteryTitle, "classement", rankedNames)
                         }
                       />
                     )}
@@ -562,5 +618,23 @@ export default function LotteryModal({ isOpen, onClose, initialItems, initialTit
         </motion.div>
       )}
     </AnimatePresence>
+
+    {isAuthenticated && (
+      <LibraryPickerModal
+        isOpen={showLibraryPicker}
+        onClose={() => setShowLibraryPicker(false)}
+        savedItems={savedItems}
+        recentFolder={recentFolder}
+        otherFolders={otherFolders}
+        selectedItems={items.map(i => i.name)}
+        loadingItems={loadingSavedItems}
+        onToggleItem={(name) => toggleItem(name, true)}
+        onDeleteItem={handleDeleteSavedItem}
+        onCreateFolder={handleCreateFolder}
+        onDeleteFolder={handleDeleteFolder}
+        onToggleItemFolder={handleToggleItemFolder}
+      />
+    )}
+    </>
   );
 }

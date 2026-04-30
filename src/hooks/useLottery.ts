@@ -168,24 +168,35 @@ export const useLottery = (isAuthenticated: boolean = false) => {
   );
 
   // Save a result with a pre-determined winner (elimination / classement)
+  // rankedNames: participant names in rank order (rank 1 first) — used to
+  // preserve the draw ranking in the stored participants_list
   const saveManualResult = useCallback(
-    async (winnerName: string, title?: string, mode?: string) => {
+    async (winnerName: string, title?: string, mode?: string, rankedNames?: string[]) => {
       const winner =
         items.find((i) => i.name === winnerName) ??
         ({ id: crypto.randomUUID(), name: winnerName } as LotteryItem);
       const timestamp = new Date();
 
+      // Build ordered elements: use ranked order if provided, else original list
+      const orderedItems: LotteryItem[] = rankedNames
+        ? rankedNames.map(
+            (name) =>
+              items.find((i) => i.name === name) ??
+              ({ id: crypto.randomUUID(), name } as LotteryItem)
+          )
+        : [...items];
+
       const result: LotteryResult = {
         winner,
-        elements: [...items],
+        elements: orderedItems,
         timestamp,
-        participantsCount: items.length,
+        participantsCount: orderedItems.length,
         title: title?.trim() || undefined,
         drawMode: mode,
       };
 
       if (isAuthenticated) {
-        const savedEntry = await saveLotteryResult(winner, items, title, mode);
+        const savedEntry = await saveLotteryResult(winner, orderedItems, title, mode);
         if (savedEntry) {
           const savedResult: LotteryResult = {
             ...result,

@@ -115,7 +115,7 @@ export default function TournamentModal({ isOpen, onClose, onSaved }: Tournament
         >
           <motion.div
             className={`relative w-full flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl ${
-              draw.phase >= 3 ? "sm:max-w-3xl" : "sm:max-w-md"
+              draw.phase >= 3 ? "sm:max-w-3xl" : draw.phase === 2 ? "sm:max-w-xl" : "sm:max-w-md"
             }`}
             style={{
               maxHeight: "calc(100vh - 96px)",
