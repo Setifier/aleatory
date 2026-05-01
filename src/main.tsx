@@ -6,13 +6,18 @@ import { initSentry } from "./lib/sentry";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router.tsx";
 import { AuthProvider } from "./context/AuthContext";
+import { MotionConfig } from "framer-motion";
 
 initSentry();
 
+// reducedMotion="user" makes every framer-motion animation across the entire app
+// respect the OS-level "prefers-reduced-motion: reduce" setting automatically.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <MotionConfig reducedMotion="user">
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </MotionConfig>
   </StrictMode>
 );

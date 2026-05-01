@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { UserAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
@@ -12,6 +13,7 @@ import AdvancedActionsSection from "../components/settings/AdvancedActionsSectio
 import EmailConfirmationModal from "../components/settings/EmailConfirmationModal";
 
 const Settings = () => {
+  usePageTitle("Paramètres");
   const auth = UserAuth();
   const navigate = useNavigate();
   const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);

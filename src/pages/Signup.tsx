@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePageTitle } from "../hooks/usePageTitle";
 import Button from "../components/ui/Button";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
@@ -7,6 +8,7 @@ import { formatAndValidatePseudo } from "../lib/pseudoUtils";
 import ConfirmModal from "../components/ui/ConfirmModal";
 
 const Signup = () => {
+  usePageTitle("Inscription");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

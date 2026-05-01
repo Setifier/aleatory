@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 const LegalNotice = () => {
+  usePageTitle("Mentions légales");
   return (
     <div className="bg-secondary-50 min-h-screen p-4">
       <div className="max-w-4xl mx-auto">

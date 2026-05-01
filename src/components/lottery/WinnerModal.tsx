@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LotteryResult } from "../../hooks/useLottery";
+import { useModalA11y } from "../../hooks/useModalA11y";
 import Button from "../ui/Button";
 
 interface WinnerModalProps {
@@ -13,6 +15,9 @@ export default function WinnerModal({
   result,
   onClose,
 }: WinnerModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalA11y(isOpen, onClose, dialogRef);
+
   if (!result) return null;
 
   return (
@@ -57,6 +62,10 @@ export default function WinnerModal({
           </div>
 
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Résultat du tirage"
             className="relative max-w-2xl w-full"
             initial={{ scale: 0.5, y: 100 }}
             animate={{ scale: 1, y: 0 }}

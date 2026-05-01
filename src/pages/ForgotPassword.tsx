@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from "react";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import Button from "../components/ui/Button";
 
 const ForgotPassword = () => {
+  usePageTitle("Mot de passe oublié");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
